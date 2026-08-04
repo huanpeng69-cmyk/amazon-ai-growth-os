@@ -1,0 +1,14 @@
+{
+  "note": "真实样本图片数据（示例）—— 接入 Amazon 商品图 CDN / 图库 API 或用户上传后替换。非随机生成；URL 为占位样本，仅用于架构演示。",
+  "by_key": {
+    "B09EXAMPLE02": [
+      {"url": "https://example.com/sample/cat-fountain-main.jpg", "width": 1000, "height": 1000, "kind": "product", "source": "amazon_cdn"},
+      {"url": "https://example.com/sample/cat-fountain-scene.jpg", "width": 1200, "height": 900, "kind": "product", "source": "amazon_cdn"},
+      {"url": "https://example.com/sample/competitor-fountain.jpg", "width": 1000, "height": 1000, "kind": "competitor", "source": "amazon_cdn"}
+    ]
+  },
+  "pool": [
+    {"url": "https://example.com/sample/reference-pet-kitchen.jpg", "width": 1200, "height": 800, "kind": "reference", "source": "stock"},
+    {"url": "https://example.com/sample/reference-white-bg.jpg", "width": 1000, "height": 1000, "kind": "reference", "source": "stock"}
+  ]
+}

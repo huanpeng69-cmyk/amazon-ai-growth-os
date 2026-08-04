@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Amazon AI Growth OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/assets/css/styles.css" />
+</head>
+<body>
+<div class="shell">
+  <!-- 侧边主导航（产品导航，非后台菜单） -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M21 7v6h-6"/></svg>
+      </div>
+      <div>
+        <div class="name">Growth OS</div>
+        <div class="sub">AI · Amazon</div>
+      </div>
+    </div>
+
+    <div class="nav-label">智能工作流</div>
+    <div class="nav-item active" data-route="#/">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg>
+      <span>AI 市场雷达</span><span class="dot"></span>
+    </div>
+    <div class="nav-item" data-route="#/voc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4L3 21l1.1-3.9A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      <span>VOC 分析</span>
+    </div>
+    <div class="nav-item" data-route="#/listing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+      <span>Listing 工厂</span>
+    </div>
+    <div class="nav-item" data-route="#/visual">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span>视觉工厂</span>
+    </div>
+    <div class="nav-item" data-route="#/profit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>利润分析</span>
+    </div>
+    <div class="nav-item" data-route="#/settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>接口设置</span>
+    </div>
+    <div class="nav-item" data-route="#/report">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      <span>总报告</span>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="user-pill">
+      <div class="av">L</div>
+      <div class="meta"><b>李焕鹏</b><span>Pro 工作区</span></div>
+    </div>
+  </aside>
+
+  <!-- 主区域 -->
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs" id="crumbs">首页 / <b>AI 市场雷达</b></div>
+      <form class="cmd" id="globalCmd">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="globalInput" placeholder="向 AI 提问，例如：在美国厨房类目找预算 $5000 的蓝海产品…" autocomplete="off" />
+        <button class="send" type="submit" aria-label="发送">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </header>
+
+    <main class="view" id="view"></main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/assets/js/api.js?v=2"></script>
+<script src="/static/assets/js/visuals.js?v=2"></script>
+<script src="/static/assets/js/views.js?v=2"></script>
+<script src="/static/assets/js/app.js?v=2"></script>
+</body>
+</html>

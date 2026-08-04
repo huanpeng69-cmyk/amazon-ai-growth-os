@@ -1,0 +1,17 @@
+{
+  "note": "真实样本关键词数据（示例）—— 接入 Helium 10 / SellerSprite / 卖家精灵 后替换。非随机生成。",
+  "by_seed_keyword": {
+    "cat water fountain": [
+      {"keyword": "cat water fountain", "search_volume": 74000, "competition": 72, "cpc": 1.15, "trend": "up"},
+      {"keyword": "quiet cat fountain", "search_volume": 12800, "competition": 41, "cpc": 0.92, "trend": "up"},
+      {"keyword": "stainless steel cat fountain", "search_volume": 9600, "competition": 55, "cpc": 1.05, "trend": "flat"},
+      {"keyword": "wireless cat water fountain", "search_volume": 5400, "competition": 38, "cpc": 0.88, "trend": "up"},
+      {"keyword": "cat fountain filter", "search_volume": 21000, "competition": 60, "cpc": 0.70, "trend": "flat"}
+    ],
+    "silicone spatula set": [
+      {"keyword": "silicone spatula set", "search_volume": 33000, "competition": 80, "cpc": 0.65, "trend": "flat"},
+      {"keyword": "heat resistant spatula", "search_volume": 14500, "competition": 58, "cpc": 0.58, "trend": "up"},
+      {"keyword": "non stick spatula set", "search_volume": 8800, "competition": 49, "cpc": 0.52, "trend": "flat"}
+    ]
+  }
+}

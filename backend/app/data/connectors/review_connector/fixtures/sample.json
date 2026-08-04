@@ -1,0 +1,18 @@
+{
+  "note": "真实样本评论（示例）—— 接入 Amazon 评论 API / easy-amazon-voc 或用户上传真实评论后替换。非随机生成。",
+  "by_asin": {
+    "B09EXAMPLE02": [
+      {"rating": 5, "body": "My cat loves this fountain, water stays fresh and the noise is minimal.", "is_vp": true, "reviewed_at": "2026-03-12", "pain_keywords": ["quiet", "fresh"]},
+      {"rating": 4, "body": "Good product but the tank is small and needs frequent refills.", "is_vp": true, "reviewed_at": "2026-02-28", "pain_keywords": ["small tank", "refill"]},
+      {"rating": 2, "body": "Started leaking after two weeks. Customer service replaced it though.", "is_vp": false, "reviewed_at": "2026-01-19", "pain_keywords": ["leaking"]},
+      {"rating": 3, "body": "Hard to clean the corners, residue builds up.", "is_vp": true, "reviewed_at": "2025-12-05", "pain_keywords": ["hard to clean", "residue"]},
+      {"rating": 5, "body": "Quiet pump, my shy cat finally drinks more water.", "is_vp": true, "reviewed_at": "2025-11-22", "pain_keywords": ["quiet", "shy cat"]},
+      {"rating": 1, "body": "Cheap plastic smell out of the box, worried about safety.", "is_vp": false, "reviewed_at": "2025-10-30", "pain_keywords": ["plastic smell", "safety"]}
+    ],
+    "B08EXAMPLE01": [
+      {"rating": 5, "body": "Large capacity, perfect for multiple cats, easy to disassemble.", "is_vp": true, "reviewed_at": "2026-04-02", "pain_keywords": ["large capacity", "easy to clean"]},
+      {"rating": 4, "body": "Works well, filter is a bit pricey to replace.", "is_vp": true, "reviewed_at": "2026-03-15", "pain_keywords": ["filter cost"]},
+      {"rating": 3, "body": "Pump got noisy after a month, still functional.", "is_vp": false, "reviewed_at": "2026-02-09", "pain_keywords": ["noisy pump"]}
+    ]
+  }
+}

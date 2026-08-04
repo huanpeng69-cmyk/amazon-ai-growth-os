@@ -1,0 +1,7 @@
+{
+  "note": "真实样本广告数据（示例）—— 接入 Amazon Advertising API 报表后替换。非随机生成。",
+  "by_asin": {
+    "B09EXAMPLE02": {"acos": 21.4, "roas": 4.1, "ctr": 0.62, "cvr": 12.8, "spend": 1840.0, "ad_sales": 8598.0, "orders": 286, "period_start": "2026-06-01", "period_end": "2026-06-30"}
+  },
+  "default": {"acos": 24.0, "roas": 3.6, "ctr": 0.55, "cvr": 11.0, "spend": 1500.0, "ad_sales": 6250.0, "orders": 210, "period_start": "2026-06-01", "period_end": "2026-06-30"}
+}

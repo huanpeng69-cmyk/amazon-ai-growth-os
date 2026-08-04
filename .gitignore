@@ -1,0 +1,76 @@
+# ── Secrets & credentials (NEVER commit) ──
+.env
+.env.local
+*.pem
+*.key
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ── Virtual environments ──
+.venv/
+venv/
+ENV/
+
+# ── Logs & runtime ──
+*.log
+server_*.log
+server_err.log
+server_out.log
+
+# ── Database files ──
+db/*.sqlite3
+db/*.db
+db/*.sqlite
+
+# ── OS / IDE / editor ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Temp debug scripts (prefixed with _) ──
+_*.py
+
+# ── Node (if any) ──
+node_modules/
+
+# ── Coverage / test artifacts ──
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ── Runtime databases (anywhere) ──
+*.db
+*.sqlite
+*.sqlite3

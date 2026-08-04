@@ -1,0 +1,19 @@
+{
+  "note": "真实样本数据集（示例）—— 接入 Amazon SP-API / Keepa 或用户上传真实商品数据后替换。非随机生成，仅用于无凭证时的架构演示。",
+  "by_keyword": {
+    "cat water fountain": [
+      {"asin": "B08EXAMPLE01", "title": "PetSafe Drinkwell Cat Water Fountain, 120oz", "price": 39.99, "bsr": 412, "est_monthly_sales": 4200, "sellers": 31, "rating": 4.5, "review_count": 8120, "category": "Pet Supplies"},
+      {"asin": "B09EXAMPLE02", "title": "CATITUDE Wireless Cat Water Fountain, 2.5L", "price": 29.99, "bsr": 1280, "est_monthly_sales": 2600, "sellers": 44, "rating": 4.3, "review_count": 3140, "category": "Pet Supplies"},
+      {"asin": "B0AEXAMPLE03", "title": "ISYMAC Silent Cat Fountain Stainless Steel", "price": 45.50, "bsr": 2050, "est_monthly_sales": 1500, "sellers": 22, "rating": 4.6, "review_count": 980, "category": "Pet Supplies"}
+    ],
+    "silicone spatula set": [
+      {"asin": "B07EXAMPLE11", "title": "DI ORO Silicone Spatula Set, 3-Piece", "price": 19.99, "bsr": 640, "est_monthly_sales": 9800, "sellers": 18, "rating": 4.7, "review_count": 12400, "category": "Kitchen"},
+      {"asin": "B0BEXAMPLE12", "title": "MKTIFY Heat-Resistant Spatula Set, 5-Piece", "price": 14.99, "bsr": 1120, "est_monthly_sales": 7100, "sellers": 27, "rating": 4.4, "review_count": 5300, "category": "Kitchen"}
+    ]
+  },
+  "by_asin": {
+    "B08EXAMPLE01": {"asin": "B08EXAMPLE01", "title": "PetSafe Drinkwell Cat Water Fountain, 120oz", "price": 39.99, "bsr": 412, "est_monthly_sales": 4200, "sellers": 31, "rating": 4.5, "review_count": 8120, "category": "Pet Supplies"},
+    "B09EXAMPLE02": {"asin": "B09EXAMPLE02", "title": "CATITUDE Wireless Cat Water Fountain, 2.5L", "price": 29.99, "bsr": 1280, "est_monthly_sales": 2600, "sellers": 44, "rating": 4.3, "review_count": 3140, "category": "Pet Supplies"},
+    "B0AEXAMPLE03": {"asin": "B0AEXAMPLE03", "title": "ISYMAC Silent Cat Fountain Stainless Steel", "price": 45.50, "bsr": 2050, "est_monthly_sales": 1500, "sellers": 22, "rating": 4.6, "review_count": 980, "category": "Pet Supplies"}
+  }
+}
