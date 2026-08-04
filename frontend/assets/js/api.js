@@ -1,216 +1,158 @@
-/* API 客户端：封装后端接口调用 */
+/* API 客户端：封装后端接口调用。
+ * 演示模式：当后端不可达（静态部署 / 本地未启动）时，自动回退到内嵌示例数据，
+ * 保证在线展示可用。可在 URL 加 ?demo=1 强制开启。 */
 const API = {
   base: "",
+  demoMode: false,        // 是否处于演示回退（后端不可达）
+  _forceDemo: false,      // ?demo=1 强制
+  _bannerShown: false,
+
+  /* 轻量健康检查，用于主动判定后端是否在线 */
+  async health() {
+    try {
+      const r = await fetch(this.base + "/api/health");
+      return r.ok;
+    } catch (_) {
+      return false;
+    }
+  },
+
+  /* 统一请求入口：网络层失败 → 演示数据回退；HTTP 错误 → 原样抛出 */
+  async _req(method, path, body, isForm) {
+    let r;
+    try {
+      r = await fetch(this.base + path, {
+        method,
+        headers: isForm ? {} : (body !== undefined ? { "Content-Type": "application/json" } : {}),
+        body: isForm ? body : (body !== undefined ? JSON.stringify(body) : undefined),
+      });
+    } catch (netErr) {
+      // 后端不可达：尝试演示数据回退
+      const d = this._demo(method, path, body);
+      if (d !== undefined) { this._markDemo(); return d; }
+      throw netErr;
+    }
+    if (!r.ok) {
+      // 演示模式（后端不可达或 ?demo=1）：HTTP 错误也尝试回退
+      if (this.demoMode || this._forceDemo) {
+        const d = this._demo(method, path, body);
+        if (d !== undefined) { this._markDemo(); return d; }
+      }
+      let detail = method + " " + path + " failed: " + r.status;
+      try { detail = (await r.json()).detail || detail; } catch (_) {}
+      throw new Error(detail);
+    }
+    return r.json();
+  },
+
+  /* 演示数据路由 */
+  _demo(method, path, body) {
+    const DD = window.DEMO_DATA;
+    if (!DD) return undefined;
+    // 蓝海雷达：按类目选择示例
+    if (path === "/api/blue-ocean/research") {
+      const cat = (body && body.category) || "Beauty";
+      return DD.blueocean[cat] || DD.blueocean[cat.toLowerCase()] || DD.blueocean.__default;
+    }
+    if (path === "/api/agent/run") return DD.run;
+    if (path === "/api/agent/listing") return DD.listing;
+    if (path === "/api/agent/image") return DD.image;
+    if (path === "/api/agent/advertising") return DD.advertising;
+    if (path === "/api/agent/visual") return DD.visual;
+    if (path === "/api/agent/voc") return DD.voc;
+    if (path === "/api/agent/profit") return DD.profit;
+    if (path === "/api/agent/market_research") return DD.market_research;
+    if (path === "/api/data/connectors") return DD.connectors;
+    if (path === "/api/lifecycle" && method === "GET") return DD.lifecycle;
+    if (path === "/api/workspace/products") return DD.workspace_products;
+    if (path === "/api/workspace" && method === "GET")
+      return { active: null, products: DD.workspace_products };
+    // 写操作 / 设置：演示模式返回成功桩，避免界面报错
+    if (path === "/api/settings" && method === "GET")
+      return { demo: true, configured: {}, available: ["bright_data", "agnes", "wisart"], providers: {} };
+    if (path === "/api/settings" && method === "PUT") return { ok: true, demo: true };
+    if (path === "/api/settings/test") return { ok: true, demo: true, message: "演示模式：跳过真实校验" };
+    if (path === "/api/workspace/context" && method === "PUT") return { ok: true, demo: true };
+    if (path === "/api/lifecycle" && method === "POST") return { ok: true, demo: true };
+    if (path === "/api/tools/") return undefined;
+    if (path.startsWith("/api/tools/")) return { demo: true, note: "演示模式不支持工具直调" };
+    if (path.startsWith("/api/workspace/") && path.endsWith("/activate"))
+      return { ok: true, demo: true };
+    if (path.startsWith("/api/lifecycle/") && path.endsWith("/advance"))
+      return { ok: true, demo: true };
+    return undefined;
+  },
+
+  _markDemo() {
+    this.demoMode = true;
+    if (!this._bannerShown) { this._bannerShown = true; this._showBanner(); }
+  },
+
+  _showBanner() {
+    try {
+      if (document.getElementById("demoBanner")) return;
+      const b = document.createElement("div");
+      b.id = "demoBanner";
+      b.textContent = "演示模式 · 当前展示示例数据（后端未连接）。本地运行后端可获取实时结果。";
+      b.style.cssText =
+        "position:fixed;top:0;left:0;right:0;z-index:9999;background:#f5a623;color:#1a1a1a;" +
+        "font-size:13px;font-weight:600;text-align:center;padding:7px 12px;box-shadow:0 2px 10px rgba(0,0,0,.25)";
+      document.body.appendChild(b);
+    } catch (_) {}
+  },
 
   async blueOcean(country, category, budgetUsd, productId) {
     const body = { country, category, budget_usd: budgetUsd };
     if (productId) body.product_id = productId;
-    const r = await fetch(this.base + "/api/blue-ocean/research", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) throw new Error("research failed: " + r.status);
-    return r.json();
+    return this._req("POST", "/api/blue-ocean/research", body);
   },
 
   async runAgent(query) {
-    const r = await fetch(this.base + "/api/agent/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
-    });
-    if (!r.ok) throw new Error("agent failed: " + r.status);
-    return r.json();
+    return this._req("POST", "/api/agent/run", { query });
   },
 
   async tool(name, input, backend) {
     const body = { input };
     if (backend) body.backend = backend;
-    const r = await fetch(this.base + "/api/tools/" + name, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) {
-      let detail = "tool failed: " + r.status;
-      try { detail = (await r.json()).detail || detail; } catch (_) {}
-      throw new Error(detail);
-    }
-    return r.json();
+    return this._req("POST", "/api/tools/" + name, body);
   },
 
-  /* —— 新增 Agent 直调 —— */
-  async listing(input) {
-    const r = await fetch(this.base + "/api/agent/listing", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "listing failed");
-    return r.json();
-  },
+  async listing(input) { return this._req("POST", "/api/agent/listing", input); },
+  async imageGen(input) { return this._req("POST", "/api/agent/image", input); },
+  async advertising(input) { return this._req("POST", "/api/agent/advertising", input); },
+  async visual(input) { return this._req("POST", "/api/agent/visual", input); },
+  async voc(input) { return this._req("POST", "/api/agent/voc", input); },
 
-  async imageGen(input) {
-    const r = await fetch(this.base + "/api/agent/image", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "image failed");
-    return r.json();
-  },
+  async linkage(productId) { return this._req("GET", "/api/workspace/" + productId + "/linkage"); },
 
-  async advertising(input) {
-    const r = await fetch(this.base + "/api/agent/advertising", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "advertising failed");
-    return r.json();
-  },
-
-  /* —— Product Visual Agent（策略优先） —— */
-  async visual(input) {
-    const r = await fetch(this.base + "/api/agent/visual", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "visual failed");
-    return r.json();
-  },
-
-  /* —— VOC 分析（直调，带产品空间回写） —— */
-  async voc(input) {
-    const r = await fetch(this.base + "/api/agent/voc", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "voc failed");
-    return r.json();
-  },
-
-  /* —— 跨模块联动图 —— */
-  async linkage(productId) {
-    const r = await fetch(this.base + "/api/workspace/" + productId + "/linkage");
-    if (!r.ok) throw new Error("linkage failed");
-    return r.json();
-  },
-
-  /* —— 生命周期管理 —— */
-  async lifecycleCreate(input) {
-    const r = await fetch(this.base + "/api/lifecycle", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "create failed");
-    return r.json();
-  },
-  async lifecycleList() {
-    const r = await fetch(this.base + "/api/lifecycle");
-    if (!r.ok) throw new Error("list failed");
-    return r.json();
-  },
-  async lifecycleGet(id) {
-    const r = await fetch(this.base + "/api/lifecycle/" + id);
-    if (!r.ok) throw new Error("get failed");
-    return r.json();
-  },
+  async lifecycleCreate(input) { return this._req("POST", "/api/lifecycle", input); },
+  async lifecycleList() { return this._req("GET", "/api/lifecycle"); },
+  async lifecycleGet(id) { return this._req("GET", "/api/lifecycle/" + id); },
   async lifecycleAdvance(id) {
-    const r = await fetch(this.base + "/api/lifecycle/" + id + "/advance", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "advance failed");
-    return r.json();
+    return this._req("POST", "/api/lifecycle/" + id + "/advance", {});
   },
 
-  /* —— 接口设置（运行时配置） —— */
-  async settingsGet() {
-    const r = await fetch(this.base + "/api/settings");
-    if (!r.ok) throw new Error("settings get failed");
-    return r.json();
-  },
-  async settingsPut(changes) {
-    const r = await fetch(this.base + "/api/settings", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ changes }),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "settings put failed");
-    return r.json();
-  },
-  async settingsTest(target) {
-    const r = await fetch(this.base + "/api/settings/test", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target }),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "test failed");
-    return r.json();
-  },
+  async settingsGet() { return this._req("GET", "/api/settings"); },
+  async settingsPut(changes) { return this._req("PUT", "/api/settings", { changes }); },
+  async settingsTest(target) { return this._req("POST", "/api/settings/test", { target }); },
 
-  /* —— 数据层状态与溯源（统一数据层可视化） —— */
-  async dataConnectors() {
-    const r = await fetch(this.base + "/api/data/connectors");
-    if (!r.ok) throw new Error("connectors failed");
-    return r.json();
-  },
+  async dataConnectors() { return this._req("GET", "/api/data/connectors"); },
   async dataProvenance(connectors) {
     const qs = (connectors && connectors.length)
-      ? "?connectors=" + connectors.map(encodeURIComponent).join(",")
-      : "";
-    const r = await fetch(this.base + "/api/data/provenance" + qs);
-    if (!r.ok) throw new Error("provenance failed");
-    return r.json();
+      ? "?connectors=" + connectors.map(encodeURIComponent).join(",") : "";
+    return this._req("GET", "/api/data/provenance" + qs);
   },
 
-  /* —— 产品空间（跨模块共享上下文） —— */
-  async workspaceGet() {
-    const r = await fetch(this.base + "/api/workspace");
-    if (!r.ok) throw new Error("workspace get failed");
-    return r.json();
-  },
-  async workspaceProducts() {
-    const r = await fetch(this.base + "/api/workspace/products");
-    if (!r.ok) throw new Error("workspace list failed");
-    return r.json();
-  },
+  async workspaceGet() { return this._req("GET", "/api/workspace"); },
+  async workspaceProducts() { return this._req("GET", "/api/workspace/products"); },
   async workspaceActivate(id) {
-    const r = await fetch(this.base + "/api/workspace/" + id + "/activate", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "activate failed");
-    return r.json();
+    return this._req("POST", "/api/workspace/" + id + "/activate", {});
   },
-  async workspaceSave(ctx) {
-    const r = await fetch(this.base + "/api/workspace/context", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ctx),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "workspace save failed");
-    return r.json();
-  },
+  async workspaceSave(ctx) { return this._req("PUT", "/api/workspace/context", ctx); },
 
-  /* —— 利润测算模块 —— */
-  async profit(input) {
-    const r = await fetch(this.base + "/api/agent/profit", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) throw new Error((await r.json()).detail || "profit failed");
-    return r.json();
-  },
+  async profit(input) { return this._req("POST", "/api/agent/profit", input); },
+  async marketResearch(input) { return this._req("POST", "/api/agent/market_research", input); },
 
-  /* —— 市场调研 Agent（Bright Data 取数 + AI 分析，输出市场报告） —— */
-  async marketResearch(input) {
-    const r = await fetch(this.base + "/api/agent/market_research", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!r.ok) {
-      let detail = "market research failed";
-      try { detail = (await r.json()).detail || detail; } catch (_) {}
-      throw new Error(detail);
-    }
-    return r.json();
-  },
   async profitUploadCost(file) {
     const fd = new FormData();
     fd.append("file", file);
@@ -220,9 +162,18 @@ const API = {
   },
 };
 
+/* 兼顾 ?demo=1 强制演示模式 */
+(function () {
+  try {
+    const p = new URLSearchParams(location.search);
+    if (p.has("demo")) API._forceDemo = true;
+  } catch (_) {}
+})();
+
 /* 简易 toast */
 function toast(msg) {
   const el = document.getElementById("toast");
+  if (!el) return;
   el.textContent = msg;
   el.classList.add("show");
   clearTimeout(el._t);

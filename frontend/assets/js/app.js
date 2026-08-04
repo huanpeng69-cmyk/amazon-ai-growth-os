@@ -453,8 +453,24 @@ function routeIntent(d, q) {
 }
 
 window.addEventListener("hashchange", render);
-Workspace.init();   // 恢复产品空间上下文（内部状态，不再渲染上下文条 UI）
-render();
+
+/* 启动引导：先判定后端是否在线，离线则进入演示模式（自动回退示例数据） */
+(async function bootstrap() {
+  try { API._forceDemo = new URLSearchParams(location.search).has("demo"); } catch (_) {}
+  let healthy = false;
+  try {
+    healthy = await Promise.race([
+      API.health(),
+      new Promise((res) => setTimeout(() => res(false), 1500)),
+    ]);
+  } catch (_) { healthy = false; }
+  if (API._forceDemo || !healthy) {
+    API.demoMode = true;
+    API._showBanner();
+  }
+  Workspace.init();   // 恢复产品空间上下文（内部状态，不再渲染上下文条 UI）
+  render();
+})();
 
 /* —— 选品后自动预填：从雷达/报告选中产品时，把名称/类目/国家/预算写入 Workspace ——
  *   后续进入利润 / Listing / 视觉 / 广告等页面时，prefillWorkspace 会自动带入。
