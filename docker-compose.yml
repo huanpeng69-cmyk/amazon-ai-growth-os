@@ -1,0 +1,78 @@
+# ============================================================
+# Amazon AI Growth OS · 本地/单机生产编排
+#   docker compose up --build      # 一条命令起 app + postgres + redis
+#   打开 http://127.0.0.1:8000/
+#
+# 默认 app 用 SQLite（落盘到 appdata 卷，零配置可跑）。
+# 需要 PostgreSQL 时：取消 app.environment 中 DATABASE_URL 的注释即可
+# （postgres / redis 服务已随时待命）。
+# ============================================================
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amazon-ai-growth-os:latest
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: production
+      WEB_CONCURRENCY: "2"
+      # 默认：SQLite 落盘到挂载卷（重启不丢数据）
+      DATABASE_URL: "sqlite:////app/backend/data/amazon_growth_os.db"
+      # 切换 PostgreSQL：注释上一行、启用下一行
+      # DATABASE_URL: "postgresql://aigos:aigos_pw@postgres:5432/aigos"
+      # 开启 API 鉴权（配置即启用，见 app/security.py）：
+      # API_AUTH_TOKEN: "换成强随机值"
+      # 收紧 CORS（见 app/main.py）：
+      # CORS_ALLOW_ORIGINS: "https://your.domain"
+    # 可选：若根目录存在 .env（真实 API Key 等）则注入；不存在也不报错
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - appdata:/app/backend/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aigos
+      POSTGRES_PASSWORD: aigos_pw
+      POSTGRES_DB: aigos
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aigos -d aigos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  appdata:
+  pgdata:
+  redisdata:

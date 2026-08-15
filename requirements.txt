@@ -10,8 +10,14 @@ python-multipart>=0.0.9      # 利润成本上传接口（multipart/form-data）
 sqlalchemy>=2.0             # ORM + SQLite/PostgreSQL
 pydantic>=2.5               # 配置 / 契约模型
 
+# ── 生产部署（Docker / docker-compose 用；本地开发可不装）──
+gunicorn>=21.2             # 生产多 worker 部署（gunicorn -k UvicornWorker，替代 uvicorn 单进程）
+psycopg2-binary>=2.9       # PostgreSQL 驱动（DATABASE_URL=postgresql://...；SQLite 时不需要）
+redis>=5.0                 # 多实例共享限流后端（见 app/ratelimit.py；单实例内存限流时不需要）
+
 # ── 可选 / 未来扩展（按需取消注释，非运行必需）──
 # langgraph>=0.2            # 替换内置轻量编排引擎
 # pgvector>=0.2             # PostgreSQL 向量检索
 # openai>=1.0               # 若改用官方 SDK 调用 LLM/生图
-# gunicorn>=21.2            # 生产多 worker 部署（替代 uvicorn 单进程）
+
+# 精确版本锁定见 requirements.lock（Docker 构建使用它以保证可复现）。

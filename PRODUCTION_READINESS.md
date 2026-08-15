@@ -23,7 +23,11 @@
   - 测试：`backend/tests/test_ratelimit.py`（7 用例，含 TestClient 集成）、`backend/tests/test_brightdata_client.py`（11 用例，重试/429/退避/信号量/解析）。全仓 **57 passed**，ruff 全绿。
   - **设计取舍**：原计划用 slowapi，但其 `@limiter.limit` 装饰器强制端点签名含 `request: Request`，需改动全部 8 个路由文件；故改用零依赖自研限流器（与 Bright Data 客户端「标准库实现」风格一致）。多 worker / 多实例共享配额需把 `Window.bucket` 换成 Redis —— 见 P0-4 docker-compose 注释。
   - 验收：同 IP 连打 25 次受保护端点 → 前 20 次 200、后 5 次 429（带 `Retry-After`）；BD 瞬时 429/5xx 经退避自愈，最终失败仍按既有 `BrightDataError` 触发诚实降级。
-- [ ] P0-4 可复现构建（Dockerfile + 版本锁定 + gunicorn 多 worker）
+- [x] P0-4 可复现构建（Dockerfile + 版本锁定 + gunicorn 多 worker + docker-compose）
+  - 交付：`requirements.lock`（锁定与 `requirements.txt` 下限兼容的真实稳定 PyPI 版本，全依赖树精确 `==`，含 gunicorn/uvloop/psycopg2-binary/redis）；`Dockerfile`（`python:3.13-slim` + `pip install -r requirements.lock` + 非 root 用户 + `HEALTHCHECK` 命中 `/api/health` + `gunicorn app.main:app -c gunicorn.conf.py`）；`backend/gunicorn.conf.py`（UvicornWorker，worker 数/超时/日志全由环境变量驱动，`WEB_CONCURRENCY` 可调）；`.dockerignore`（排除缓存/测试/DB/日志/机密）；`docker-compose.yml`（app + postgres:16 + redis:7，健康检查、命名卷、`env_file` 可选注入）；`requirements.txt` 取消 gunicorn 注释并加生产可选 psycopg2-binary/redis。
+  - 测试：`backend/tests/test_deploy_config.py`（6 用例：gunicorn worker_class/workers/bind/超时、`WEB_CONCURRENCY` 覆盖、lock 对核心依赖 `==` 锁定、Dockerfile/compose/.dockerignore 存在、`app.main:app` 可导入）。全仓 **63 passed**，ruff 全绿。
+  - **版本锁定说明**：本机 venv 的依赖为沙箱合成版本号（如 `fastapi 0.141.1`、`starlette 1.3.1`、`certifi 2026.x`），公共 PyPI 不存在，直接 `freeze` 会导致他人 `docker build` 失败；故 `requirements.lock` 锁定为与 `requirements.txt` `>=` 下限兼容的**当前公共稳定版**（fastapi 0.115.6 / uvicorn 0.34.0 / gunicorn 23.0.0 / pydantic 2.10.4 / SQLAlchemy 2.0.36 等），保证在真实环境可复现构建；可用 `pip-compile` 重新生成。
+  - 验收：`docker compose config` 校验通过（拓扑/YAML 合法）；gunicorn 配置与 app 入口经测试守护。**注**：本机 Docker Desktop 的 Linux 引擎当前未启动，未实跑 `docker build`/`docker run`，请在有守护进程的环境执行 `docker build -t amazon-ai-growth-os .` 与 `docker compose up --build` 做最终镜像层验证。
 
 ### P1 — 重要（稳定性 / 可观测性）
 - [ ] P1-1 全局异常处理 + 统一 JSON 错误包（含 trace_id）
