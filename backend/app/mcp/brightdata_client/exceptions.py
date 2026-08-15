@@ -22,10 +22,29 @@ class BrightDataAuthError(BrightDataError):
 
 
 class BrightDataTransportError(BrightDataError):
-    """传输层错误（网络 / HTTP / 超时）。"""
+    """传输层错误（网络 / HTTP / 超时 / 非重试型 4xx）。"""
 
     def __init__(self, message: str):
         super().__init__(message, status_code=502)
+
+
+class BrightDataServerError(BrightDataTransportError):
+    """Bright Data 服务端 5xx 错误（**可重试**，客户端应退避后重试）。"""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class BrightDataRateLimitError(BrightDataError):
+    """被 Bright Data 限流（HTTP 429）。
+
+    携带 ``retry_after``（秒），客户端应至少退避该时长后再试。
+    """
+
+    def __init__(self, retry_after: int | None, message: str = ""):
+        self.retry_after = retry_after
+        suffix = f"，建议退避 {retry_after}s" if retry_after else ""
+        super().__init__(f"Bright Data 限流（429）{suffix}：{message}".strip(), status_code=429)
 
 
 class BrightDataProtocolError(BrightDataError):

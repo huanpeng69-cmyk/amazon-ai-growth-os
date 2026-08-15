@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from ..ratelimit import rate_limit_heavy
+
 from ..agents.advertising.agent import AdvertisingAgent
 from ..agents.advertising.schemas import AdvertisingInput, AdvertisingOutput
 from ..agents.competitor.agent import CompetitorAgent
@@ -27,7 +29,7 @@ from ..tools.base import ToolNotConfigured
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
 
-@router.post("/run", response_model=AgentRunResult)
+@router.post("/run", response_model=AgentRunResult, dependencies=[Depends(rate_limit_heavy)])
 def run_agent(req: SupervisorInput, db=Depends(get_db)) -> AgentRunResult:
     """自然语言需求 → Supervisor 判断意图 → 派发对应专家 Agent → 汇总结果。
 
@@ -131,7 +133,7 @@ def run_competitor(req: CompetitorInput, db=Depends(get_db)):
     return out
 
 
-@router.post("/market_research", response_model=MarketResearchReport)
+@router.post("/market_research", response_model=MarketResearchReport, dependencies=[Depends(rate_limit_heavy)])
 def run_market_research(req: MarketResearchInput, db=Depends(get_db)):
     """Market Research Agent 直调：国家 + 类目 + 关键词 → 经 Bright Data 取数、清洗、AI 分析，产出市场报告。
 

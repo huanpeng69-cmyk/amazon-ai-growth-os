@@ -18,7 +18,11 @@
     `/api/health` 与 `/` 静态开放；`API_AUTH_TOKEN` 仅在配置时强制（未配置保持开放，向后兼容）。
   - 测试：`backend/tests/test_auth.py`（6 用例，TestClient 验证开放/401/Bearer/X-API-Key/query/错误 Key）。
   - 验收：未配 key 调用业务接口 200；配 key 无令牌 401；配 key 且正确令牌放行。
-- [ ] P0-3 速率限制 / 配额（slowapi+redis；Bright Data 重试+退避+并发信号量）
+- [x] P0-3 速率限制 / 配额（内存限流器 + Bright Data 重试退避 + 并发信号量）
+  - 交付：`backend/app/ratelimit.py`（零依赖固定窗口限流器：默认 20/min，重端点 5/min，按 API Key/IP 维度，429 带 `Retry-After` 与 `X-RateLimit-*` 头）；`backend/app/main.py` 受保护路由统一挂 `rate_limit_default`，`backend/app/routers/agent.py` 的 `/run`、`/market_research` 额外挂 `rate_limit_heavy`；`backend/app/mcp/brightdata_client/client.py` 增加指数退避重试（重试 5xx/429/连接错误，尊重 `Retry-After`，**不**重试 4xx/401）、`threading.Semaphore` 并发控制、统一可配超时，新增 `BrightDataRateLimitError`/`BrightDataServerError` 异常。
+  - 测试：`backend/tests/test_ratelimit.py`（7 用例，含 TestClient 集成）、`backend/tests/test_brightdata_client.py`（11 用例，重试/429/退避/信号量/解析）。全仓 **57 passed**，ruff 全绿。
+  - **设计取舍**：原计划用 slowapi，但其 `@limiter.limit` 装饰器强制端点签名含 `request: Request`，需改动全部 8 个路由文件；故改用零依赖自研限流器（与 Bright Data 客户端「标准库实现」风格一致）。多 worker / 多实例共享配额需把 `Window.bucket` 换成 Redis —— 见 P0-4 docker-compose 注释。
+  - 验收：同 IP 连打 25 次受保护端点 → 前 20 次 200、后 5 次 429（带 `Retry-After`）；BD 瞬时 429/5xx 经退避自愈，最终失败仍按既有 `BrightDataError` 触发诚实降级。
 - [ ] P0-4 可复现构建（Dockerfile + 版本锁定 + gunicorn 多 worker）
 
 ### P1 — 重要（稳定性 / 可观测性）
@@ -80,6 +84,7 @@
   - API 层加 `slowapi` 限流（按 IP/key，如 20 req/min）；重操作（agent run）单独配额。
   - Bright Data 客户端加：指数退避重试（尊重 `Retry-After`/429）、并发 `Semaphore`、超时统一。
 - **验收标准**：压测下单 key 超阈值返回 429；BD 瞬时 429 自愈不报错。
+- **✅ 已完成（2026-08-04）**：见上方总览 P0-3 注释。API 层改用零依赖自研限流器（未引入 slowapi，理由见总览），Bright Data 客户端已完成重试退避 + 并发信号量 + 统一超时。
 
 ### P0-4 可复现构建 / 部署
 - **问题**：`requirements.txt` 全 `>=`、零版本锁定（grep 命中 0 个 `==`）；无 `Dockerfile`；`gunicorn` 在 requirements 被注释。

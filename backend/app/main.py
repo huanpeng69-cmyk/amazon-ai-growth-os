@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.security import get_current_key
+from app.ratelimit import rate_limit_default
 
 
 def _load_env_file() -> None:
@@ -134,8 +135,13 @@ _PROTECTED_ROUTERS = [
     profit_router,
     data_router,
 ]
+# 受保护路由：统一要求 API Key（若已配置 API_AUTH_TOKEN）+ 默认速率限制。
+# /api/health 与 / 静态资源不在此列，保持开放。
 for _m in _PROTECTED_ROUTERS:
-    app.include_router(_m.router, dependencies=[Depends(get_current_key)])
+    app.include_router(
+        _m.router,
+        dependencies=[Depends(get_current_key), Depends(rate_limit_default)],
+    )
 
 # settings 路由有独立的 SETTINGS_API_TOKEN 写保护，不叠加全局 API Key。
 app.include_router(settings_router.router)

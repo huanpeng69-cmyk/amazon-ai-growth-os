@@ -19,6 +19,10 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
+import http.client
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from app.config_store import get as config_get
@@ -26,10 +30,20 @@ from app.mcp.brightdata_client.exceptions import (
     BrightDataAuthError,
     BrightDataError,
     BrightDataProtocolError,
+    BrightDataRateLimitError,
+    BrightDataServerError,
     BrightDataToolError,
     BrightDataToolNotFound,
     BrightDataTransportError,
 )
+
+
+def _coerce_int(val: Any, default: int) -> int:
+    """把配置值安全转 int；非法/缺失回退 default。"""
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return default
 
 
 # ───────────────────────── Transport 抽象 ─────────────────────────
@@ -76,13 +90,34 @@ class StreamableHttpTransport(Transport):
 
     对端点 URL 做一次 ``initialize`` 握手，拿到 ``Mcp-Session-Id`` 后复用；
     后续 ``tools/list`` / ``tools/call`` 复用同一会话。
+
+    韧性增强（P0-3）：
+    - **统一超时**：``timeout`` 同时作用于连接与读取（http.client 语义）。
+    - **指数退避重试**：对 429（尊重 ``Retry-After``）、5xx、连接/协议层瞬时错误
+      自动重试 ``max_retries`` 次；4xx（含 401/403）与协议解析错误**不重试**。
+    - **并发信号量**：``max_concurrent_calls`` 限制同时发往 Bright Data 的调用数，
+      避免高频打满按量计费额度。
     """
 
-    def __init__(self, endpoint: str, api_key: str, timeout: float = 60.0):
+    def __init__(
+        self,
+        endpoint: str,
+        api_key: str,
+        timeout: float = 60.0,
+        max_retries: int = 3,
+        backoff_base: float = 0.5,
+        backoff_max: float = 8.0,
+        max_concurrent_calls: int = 8,
+    ):
         self.endpoint = endpoint.rstrip("/")
         self.api_key = api_key
         self.timeout = timeout
+        self.max_retries = max(0, int(max_retries))
+        self.backoff_base = backoff_base
+        self.backoff_max = backoff_max
         self.session_id: Optional[str] = None
+        # 跨线程并发上限（agent 在 uvicorn threadpool 中并发执行）
+        self._sem = threading.Semaphore(max(1, int(max_concurrent_calls)))
 
     def _headers(self) -> Dict[str, str]:
         h = {
@@ -95,8 +130,13 @@ class StreamableHttpTransport(Transport):
             h["Mcp-Session-Id"] = self.session_id
         return h
 
-    def _post(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        import http.client
+    def request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        # 并发信号量：限制同时发往 Bright Data 的调用数（含退避期间占用）。
+        with self._sem:
+            return self._post(payload)
+
+    # —— 单次发送：连接 + 读取 + 错误分类（不负责重试）——
+    def _send_once(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         from urllib.parse import urlparse
 
         if not self.api_key:
@@ -124,9 +164,17 @@ class StreamableHttpTransport(Transport):
                 self.session_id = sid
         finally:
             conn.close()
+        # 错误分类：决定是否需要重试
         if status in (401, 403):
             raise BrightDataAuthError(f"HTTP {status}")
+        if status == 429:
+            retry_after = _parse_retry_after(resp.getheader("Retry-After"))
+            raise BrightDataRateLimitError(retry_after, f"HTTP 429：{body[:300]}")
+        if status >= 500:
+            # 5xx：服务端瞬时故障，可重试
+            raise BrightDataServerError(f"HTTP {status}：{body[:500]}")
         if status >= 400:
+            # 其余 4xx（400/404/422 等）：客户端错误，不重试
             raise BrightDataTransportError(f"HTTP {status}：{body[:500]}")
         try:
             return _extract_sse_json(body)
@@ -134,8 +182,29 @@ class StreamableHttpTransport(Transport):
             # 有些端点返回纯文本错误信息
             raise BrightDataProtocolError(f"无法解析响应（HTTP {status}）：{body[:500]}")
 
-    def request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        return self._post(payload)
+    # —— 带退避重试的发送 ——
+    def _post(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        last_err: Optional[BaseException] = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                return self._send_once(payload)
+            except (BrightDataAuthError, BrightDataToolError, BrightDataProtocolError):
+                # 不可重试：鉴权失败 / 工具业务错误 / 协议解析失败
+                raise
+            except (BrightDataRateLimitError, BrightDataServerError, OSError, http.client.HTTPException) as e:
+                last_err = e
+                if attempt >= self.max_retries:
+                    break
+                wait = self._backoff(attempt, getattr(e, "retry_after", None))
+                time.sleep(wait)
+        assert last_err is not None
+        raise last_err
+
+    def _backoff(self, attempt: int, retry_after: Optional[int]) -> float:
+        """计算退避秒数：优先用服务端 Retry-After，否则指数退避（封顶 backoff_max）。"""
+        if retry_after is not None:
+            return float(min(retry_after, self.backoff_max))
+        return float(min(self.backoff_base * (2 ** attempt), self.backoff_max))
 
 
 class MockTransport(Transport):
@@ -190,12 +259,25 @@ class BrightDataMCPClient:
         transport: Optional[Transport] = None,
         timeout: float = 60.0,
         auto_init: bool = True,
+        max_retries: Optional[int] = None,
+        backoff_base: float = 0.5,
+        backoff_max: float = 8.0,
+        max_concurrent_calls: int = 8,
     ):
         self.api_key = api_key if api_key is not None else config_get("BRIGHTDATA_API_KEY", "")
         self.endpoint = endpoint or config_get("BRIGHTDATA_ENDPOINT", self.DEFAULT_ENDPOINT)
         self.timeout = timeout
+        # 重试次数可由环境变量 BRIGHTDATA_MAX_RETRIES 覆盖（便于运维调参，无需改码）。
+        env_retries = config_get("BRIGHTDATA_MAX_RETRIES", None)
+        self.max_retries = _coerce_int(env_retries, max_retries if max_retries is not None else 3)
         self._transport = transport or StreamableHttpTransport(
-            self.endpoint, self.api_key, timeout
+            self.endpoint,
+            self.api_key,
+            timeout,
+            max_retries=self.max_retries,
+            backoff_base=backoff_base,
+            backoff_max=backoff_max,
+            max_concurrent_calls=max_concurrent_calls,
         )
         self._tools_cache: Optional[List[Dict[str, Any]]] = None
         if auto_init and not isinstance(self._transport, MockTransport):
@@ -292,6 +374,30 @@ class BrightDataMCPClient:
         if "text" in result:
             return _try_json(result["text"])
         return result
+
+
+def _parse_retry_after(value: Optional[str]) -> Optional[int]:
+    """解析 HTTP ``Retry-After`` 头：支持秒数（int）或 HTTP-date 两种形式。
+
+    无法解析时返回 ``None``（调用方退化为指数退避）。
+    """
+    if not value:
+        return None
+    value = value.strip()
+    try:
+        return max(0, int(value))
+    except ValueError:
+        pass
+    try:
+        from email.utils import parsedate_to_datetime
+
+        dt = parsedate_to_datetime(value)
+        if dt is not None:
+            delta = (dt - datetime.now(timezone.utc)).total_seconds()
+            return max(0, int(delta))
+    except Exception:  # pragma: no cover - 非法日期兜底
+        pass
+    return None
 
 
 def _try_json(s: str) -> Any:
