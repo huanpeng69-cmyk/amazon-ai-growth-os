@@ -1,6 +1,6 @@
 # Amazon AI Growth OS —— 生产级就绪跟踪文档
 
-> 状态：评估完成，待逐项推进。最后更新：2026-08-04
+> 状态：评估完成，待逐项推进。最后更新：2026-08-15
 > 方法：Aegis 有界扫描（README/基线 + 定点取证），未通读全部 143 个源文件。
 > 结论：**业务正确性（数据真实性）已修复；工程化 / 运维 / 安全层面距生产仍有较大缺口。**
 
@@ -40,7 +40,7 @@
   - 测试：`backend/tests/test_logging.py`（4 用例：JSON 合法单行含全部字段、请求内日志带 `request_id` 且与响应头 `X-Trace-Id` 一致、异常日志经 `extra` 带 `trace_id`、真实 app 接入冒烟）。全仓 **75 passed**，ruff 全绿。
   - 验收：启动期/请求期日志均为 JSON 单行（实测 `advertising`/`httpx` 等 logger 输出含 `request_id`/`trace_id` 字段）；可按 `request_id`/`trace_id` 串联一次调用链（与 P1-1 错误包的 `trace_id` 一致）。
   - 备注：跨异常边界 contextvars 不可靠（同 P1-1），故错误日志在 `errors.py` 以 `extra={"trace_id":...}` 显式注入，确保 JSON 字段始终带 `trace_id`；`OpenTelemetry` 接入留作未来可选增强。
-- [ ] P1-3 数据库迁移（PostgreSQL + Alembic；替换手动 `_migrate`）
+- [x] P1-3 数据库迁移（PostgreSQL + Alembic；替换手动 `_migrate`）
 - [ ] P1-4 同步阻塞治理 + 请求整体超时（asyncio 并发 / 超时熔断）
 - [ ] P1-5 生产配置硬化（`/docs` 关闭、CORS 收紧）
 
@@ -121,10 +121,19 @@
 - **建议方案**：`logging.dictConfig` 结构化(JSON) 日志；请求 ID 中间件（`X-Request-ID`）；可选 OpenTelemetry 接入。
 - **验收标准**：日志为 JSON、带 `request_id`/`trace_id`/时间戳/级别；可按请求 ID 串联一次调用链。
 
-### P1-3 数据库迁移
-- **问题**：默认 SQLite（`backend/app/database.py` `DATABASE_URL`）；`init_db()` 用 `create_all`；`main.py:_migrate()` 仅硬编码 2 个列的 `ALTER`（`category`/`platform`），schema 演进脆弱。无 Alembic；`db/schema.sql`（PostgreSQL）未用上。
-- **建议方案**：生产切 PostgreSQL；引入 Alembic（`alembic init`，`env.py` 读 `DATABASE_URL`）；现有 `_migrate` 逻辑迁移为首个迁移脚本。
-- **验收标准**：`alembic upgrade head` 可重建最新 schema；新增列走迁移而非手工 ALTER。
+### P1-3 数据库迁移（Alembic 托管 schema，双后端 SQLite/PostgreSQL）
+- **问题**：默认 SQLite（`backend/app/database.py` `DATABASE_URL`）；`init_db()` 用 `create_all`；`main.py:_migrate()` 仅硬编码 2 个列的 `ALTER`（`category`/`platform`），schema 演进脆弱。无 Alembic；`db/schema.sql`（PostgreSQL）与 ORM 模型不一致（`task_id` 写成 `UUID`、缺 lifecycle/data 多表），未真正用上。
+- **方案**：引入 Alembic 作为**唯一权威 schema 来源**，彻底替换手写 `_migrate()`。
+  - `backend/alembic.ini`：ASCII-only（Alembic 用平台 locale 编码读 ini，GBK 无法解 UTF-8 注释，故此文件不得含中文）；`script_location=migrations`、`prepend_sys_path=.`；`sqlalchemy.url` 为本地默认，生产由 `DATABASE_URL` 环境变量覆盖。
+  - `backend/migrations/env.py`：导入 `app.database.Base` 作 `target_metadata`；优先读 `DATABASE_URL` 覆盖连接；SQLite 下开 `render_as_batch`（后续 ALTER/DROP 列迁移可在 SQLite 生效）；显式把 `backend/` 加入 `sys.path` 保证任意工作目录可导入 `app`。
+  - `backend/migrations/versions/0001_initial.py`：手写初始迁移，**完整覆盖全部 8 张业务表**（`research_tasks`/`product_opportunities`/`growth_products`/`stage_artifacts`/`raw_fetches`/`products`/`reviews`/`keyword_metrics`/`ad_metrics`/`image_assets`），`growth_products` 含被原 `_migrate` 硬编码的 `category`/`platform`；`JSON` 列双后端通用（PG→JSON、SQLite→TEXT），时间戳 `server_default=CURRENT_TIMESTAMP` 双后端通用；FK 带 `ON DELETE CASCADE`。
+  - `backend/app/migrations_run.py`：`run_migrations()` 以编程方式对当前 `DATABASE_URL` 执行 `alembic upgrade head`（优先 env，回落到 `app.config.DATABASE_URL` 绝对路径，避免 CWD 相对错位），连接串密码脱敏后写日志；由 `main.py` 的 `lifespan` 调用，失败即终止启动。
+  - `backend/app/main.py`：**移除 `_migrate()` 与 `init_db()` 启动调用**，改由 `run_migrations()` 在建表；`db/schema.sql` 顶部加弃用说明，指向 Alembic 为权威。
+  - 依赖：`requirements.txt` 加 `alembic>=1.13`/`mako>=1.3`；`requirements.lock` 锁定 `alembic==1.19.1`/`Mako==1.4.1`/`MarkupSafe==3.0.3`（CI 经 `requirements-dev.txt -r requirements.txt` 自动获得 alembic）。
+- **测试**：`backend/tests/test_migrations.py`（4 用例：alembic 产物齐全、`upgrade head` 在空 SQLite 库建出全部表且 `growth_products` 含 category/platform、重复执行幂等、`app.main` 导入无残留 `init_db`/`engine` 引用）。全仓 **80 passed**（原 75 + 4 新），ruff 全绿。
+- **关键坑（已记录）**：①`alembic.ini` 必须 ASCII（Windows 下 `configparser` 用 GBK 读，遇 UTF-8 中文注释 `UnicodeDecodeError`）；②SQLite 下 `JSON` 列用 SQLAlchemy 的 `JSON` 类型即可（底层 TEXT），无需 `JSONB`；③`func.now()` 在 SQLite 编译存在歧义，统一用 `sa.text("CURRENT_TIMESTAMP")` 双后端稳定；④`env.py` 用显式 `sys.path.insert` 而非仅靠 `prepend_sys_path`，确保 gunicorn/docker 任意 cwd 都能定位 `app` 包。
+- **验收**：`DATABASE_URL=sqlite:///./_empty.db alembic upgrade head` 实测在空库跑通，生成 11 张表（业务 10 + `alembic_version`）；真实 app 冒烟（`TestClient` 触发 lifespan）→ `/api/health` 200 且 DB 已含全部表。**诚实声明**：本机无真实 PostgreSQL 实例，PostgreSQL 路径通过 `DATABASE_URL` 注入与 `env.py` 双后端兼容配置 + 代码审查保证，未实连 PG 跑通；已在文档注明，请在 PG 环境终验。
+- **既有 SQLite 库升级说明（重要）**：Alembic 与旧 `create_all` 是两套 schema 管理体系。已在旧版 `create_all` 上建立的库，直接 `upgrade head` 会因表已存在而报错。新部署请用**空库**让其自举；既有库升级路径为：备份后新建库 `upgrade head` 再迁移数据，或 `alembic stamp head` 标记为已最新（仅在确认表结构与初始迁移一致时）。
 
 ### P1-4 同步阻塞治理 + 请求超时
 - **问题**：agent 串行调外部（Bright Data + LLM，单次 30–60s），跑在 uvicorn threadpool；无整体请求超时；supervisor 编排多 agent 无超时（grep 无 `timeout/asyncio/gather`）。并发请求会排队/耗尽 worker。

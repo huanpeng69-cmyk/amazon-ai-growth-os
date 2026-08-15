@@ -23,6 +23,11 @@ annotated-types==0.7.0
 SQLAlchemy==2.0.36
 greenlet==3.1.1
 
+# ---- 数据库迁移（Alembic，替代手写 _migrate；双后端 SQLite/PostgreSQL）----
+alembic==1.19.1
+Mako==1.4.1                 # Alembic 迁移模板渲染
+MarkupSafe==3.0.3           # Mako 依赖
+
 # ---- multipart 上传（利润成本上传接口）----
 python-multipart==0.0.20
 

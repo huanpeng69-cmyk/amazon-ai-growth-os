@@ -48,7 +48,7 @@ _load_env_file()
 configure_logging()
 logger = logging.getLogger("aigos.main")
 
-from .database import init_db, engine
+from .migrations_run import run_migrations
 from .routers import agent as agent_router
 from .routers import blue_ocean
 from .routers import tools as tools_router
@@ -61,33 +61,9 @@ from .routers import data as data_router
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
 
-def _migrate() -> None:
-    """兼容已有 SQLite 库：补充 growth_products 的新列（category / platform）。
-
-    create_all 不会给已存在的表加列，故用 ALTER TABLE 兜底。
-    """
-    from sqlalchemy import text
-
-    try:
-        with engine.connect() as conn:
-            cols = {r[1] for r in conn.execute(text("PRAGMA table_info(growth_products)")).fetchall()}
-            alters = []
-            if "category" not in cols:
-                alters.append("ALTER TABLE growth_products ADD COLUMN category VARCHAR(80) DEFAULT ''")
-            if "platform" not in cols:
-                alters.append("ALTER TABLE growth_products ADD COLUMN platform VARCHAR(20) DEFAULT 'amazon'")
-            for sql in alters:
-                conn.execute(text(sql))
-            if alters:
-                conn.commit()
-    except Exception as e:  # 表不存在等情况交给 create_all，忽略
-        logger.warning("migrate skipped: %s", e)
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()  # 演示环境自举建表
-    _migrate()  # 兼容已有库
+    run_migrations()  # Alembic：空库自举建表 / 演进 schema（已最新则幂等返回）
     yield
 
 

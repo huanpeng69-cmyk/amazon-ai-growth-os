@@ -2,6 +2,13 @@
 -- Amazon AI Growth OS —— 生产数据库 DDL（PostgreSQL 16 + pgvector）
 -- 蓝海市场挖掘模块
 -- 用法： psql "$DATABASE_URL" -f db/schema.sql
+--
+-- ⚠️ 弃用说明（2026-08-15）：本文件已不再是 schema 演进的权威来源。
+-- 数据库 schema 现由 Alembic 托管（backend/alembic.ini + backend/migrations/），
+-- 应用启动时执行 `alembic upgrade head` 建表/演进。本文件仅保留作 PostgreSQL
+-- 生产库参考（含 pgvector embedding 列意图），且其中的 task_id 用 UUID、
+-- 仅含 research/product 两张表，与当前 ORM 模型（task_id 为 String(36)、
+-- 另含 lifecycle/data 多张表）并不一致，请勿直接用于建表。
 -- ============================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

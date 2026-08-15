@@ -1,6 +1,8 @@
 """数据库引擎、会话与 Base。
 
-演示用 SQLite；生产用 PostgreSQL（见 db/schema.sql）。
+演示用 SQLite；生产用 PostgreSQL。schema 演进由 Alembic 托管
+（见 backend/alembic.ini 与 backend/migrations/），应用启动时执行
+``alembic upgrade head``（app/migrations_run.py）。
 """
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -15,7 +17,11 @@ Base = declarative_base()
 
 
 def init_db() -> None:
-    """创建所有表（演示环境用 ORM 自举；生产用 db/schema.sql 迁移）。"""
+    """遗留自举建表（仅演示/脚本用）。
+
+    生产路径请走 Alembic：``run_migrations()`` 对空库执行 ``upgrade head``。
+    这里保留以便本地一次性脚本 / 测试在无需 Alembic 时也能建表。
+    """
     from . import models  # noqa: F401  确保模型已注册到 Base.metadata
 
     Base.metadata.create_all(bind=engine)
