@@ -45,7 +45,7 @@
 - [x] P1-5 生产配置硬化（`/docs` 关闭、CORS 收紧）
 
 ### P2 — 优化项
-- [ ] P2-1 结果缓存层（keyword+country TTL）
+- [x] P2-1 结果缓存层（keyword+country TTL）
 - [ ] P2-2 前端构建 / 打包（Vite + 哈希 + CSP）
 - [ ] P2-3 API 版本化（`/api/v1`）
 - [ ] P2-4 配置校验（pydantic-settings）
@@ -157,10 +157,12 @@
 
 ## P2 — 优化项
 
-### P2-1 结果缓存层
+### P2-1 结果缓存层 ✅ 已完成（2026-08-15）
 - **问题**：每次请求都打 Bright Data + LLM，慢且贵（grep 全局无 cache 层）。
-- **建议方案**：按 `keyword+country+limit` 加 TTL 缓存（如 `cachetools`/Redis）；复用已抓评论；区分"实时模式"与"缓存模式"。
-- **验收标准**：相同检索命中缓存，BD/LLM 调用次数显著下降；TTL 可配。
+- **方案**：零依赖（契合项目标准库哲学）引入 `app/cache.py` 的 `TTLCache`（`threading.Lock` + `time.monotonic()` 过期 + 插入序 dict 的 FIFO 淘汰）。`MarketResearchAgent.run()` 先查 `research_cache`（key=`mr:{country}:{category}:{keyword}:{limit}`），命中则深拷贝并标 `cached=True`；未命中走 `_run_fresh()` 后写回。配置项 `RESEARCH_CACHE_TTL_SECONDS=600` / `RESEARCH_CACHE_MAXSIZE=256`（均 env 可覆盖）。`MarketResearchReport.cached` 字段供前端降权展示（诚实降级契约：缓存结果仍标注非实时，绝不伪造数据）。
+- **交付**：`app/cache.py`（TTLCache + 单例 `research_cache`）、`agent.py` 接入、`schemas.py` 加 `cached`、`config.py` 加 TTL/MAXSIZE、`tests/test_cache.py`（4 例：TTL 过期 / FIFO 淘汰 / get_or_set / TTL<=0 关闭 / 集成缓存命中避免二次外呼）。
+- **验收**：同输入二次调用 `cached=True` 且 LLM 仅 1 次；TTL 可配；全仓测试 91 通过、ruff 通过。
+- **已知限制**：仅 `market_research` agent 接入；其余 agent 如需缓存可复用同一 `TTLCache` 模式后续扩展。
 
 ### P2-2 前端构建 / 打包
 - **问题**：`frontend/` 为 vanilla 静态 SPA（`index.html` + `assets/js/*.js`），无 `package.json`/Vite/打包/压缩/哈希/CSP。

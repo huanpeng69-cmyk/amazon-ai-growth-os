@@ -23,6 +23,7 @@ from app.agents.market_research.schemas import (
     MarketResearchReport,
 )
 from app.llm.agnes import AgnesError, agnes
+from app.cache import research_cache
 from app.mcp.brightdata_client.exceptions import BrightDataError
 from app.mcp.tools.amazon_research import amazon_research
 from app.mcp.tools.search_web import search_web
@@ -76,6 +77,21 @@ class MarketResearchAgent:
     description = "市场调研：国家 + 类目 + 关键词 → 经 Bright Data 取数、清洗、AI 分析，产出市场报告"
 
     def run(self, inp: MarketResearchInput) -> MarketResearchReport:
+        # 命中缓存直接返回（深拷贝并标 cached，避免污染缓存中的原对象）
+        key = self._cache_key(inp)
+        cached = research_cache.get(key)
+        if cached is not None:
+            hit = cached.model_copy(deep=True)
+            hit.cached = True
+            return hit
+        report = self._run_fresh(inp)
+        research_cache.set(key, report)
+        return report
+
+    def _cache_key(self, inp: MarketResearchInput) -> str:
+        return f"mr:{inp.country}:{inp.category}:{inp.keyword}:{inp.limit}"
+
+    def _run_fresh(self, inp: MarketResearchInput) -> MarketResearchReport:
         products = self._fetch(inp)
         brief = self._clean(products, inp)
         return self._analyze(brief, inp)
@@ -212,20 +228,6 @@ class MarketResearchAgent:
                 f"市场报告必须经过 AI 分析且结构完整，但当前 LLM 不可用（{last_err}）。"
                 "请检查 AGNES_API_KEY / 网络后重试。"
             )
-        report.country = inp.country
-        report.category = inp.category
-        report.keyword = inp.keyword
-        report.generated_by = "ai"
-        report.data_source = "brightdata"
-        return report
-        # 补齐由输入决定的字段（LLM 不必回传）
-        data.setdefault("country", inp.country)
-        data.setdefault("category", inp.category)
-        data.setdefault("keyword", inp.keyword)
-        try:
-            report = MarketResearchReport(**data)
-        except Exception as e:  # pydantic validation
-            raise AgnesError(f"AI 生成的报告结构不完整：{e} | raw={data}")
         report.country = inp.country
         report.category = inp.category
         report.keyword = inp.keyword

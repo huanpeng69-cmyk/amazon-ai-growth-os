@@ -23,6 +23,11 @@ AGENT_TIMEOUT_SECONDS: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "120"))
 # 全局请求超时（秒），作为兜底护栏（默认 5 分钟）。
 REQUEST_TIMEOUT_SECONDS: int = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "300"))
 
+# 市场调研结果缓存 TTL（秒）与容量；相同 country+category+keyword+limit 命中缓存，
+# 避免重复打 Bright Data + LLM（慢且贵）。TTL=0 关闭缓存。
+RESEARCH_CACHE_TTL_SECONDS: int = int(os.getenv("RESEARCH_CACHE_TTL_SECONDS", "600"))
+RESEARCH_CACHE_MAXSIZE: int = int(os.getenv("RESEARCH_CACHE_MAXSIZE", "256"))
+
 # 生成候选利基的市场信号数量（评分后取前 10）
 CANDIDATE_POOL_SIZE: int = 24
 TOP_N: int = 10

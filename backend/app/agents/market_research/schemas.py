@@ -59,3 +59,4 @@ class MarketResearchReport(BaseModel):
     summary: str = Field(..., description="执行摘要（AI 综合，1-3 句）")
     generated_by: str = "ai"
     data_source: str = "brightdata"
+    cached: bool = Field(False, description="结果是否来自缓存（命中则非实时，供前端降权展示）")
