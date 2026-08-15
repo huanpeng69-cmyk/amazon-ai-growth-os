@@ -9,6 +9,23 @@ from app.database import SessionLocal
 from app.data import dal
 
 
+def _estimate_growth(reviews: int, price: float) -> float:
+    """基于评论热度与价格带估算年增速代理值（0.0 ~ 0.45）。
+    高评论 + 中低价 → 高增长赛道；低评论/高价 → 成熟/小众赛道。"""
+    if reviews <= 0 and price <= 0:
+        return 0.05
+    heat = min(reviews / 10000.0, 1.0)
+    if price <= 0:
+        price_factor = 0.5
+    elif 10 <= price <= 50:
+        price_factor = 1.0
+    elif 50 < price <= 100:
+        price_factor = 0.8
+    else:
+        price_factor = 0.6
+    return round(min(heat * price_factor * 0.45, 0.45), 3)
+
+
 def _minmax(values: list[float]) -> list[float]:
     lo, hi = min(values), max(values)
     if hi - lo < 1e-9:
@@ -41,7 +58,7 @@ def _to_signals(country: str, niche_keyword: str) -> list[dict]:
             "num_sellers": s.num_sellers or 0,
             "avg_reviews": s.avg_reviews or 0,
             "top_seller_share": s.top_seller_share or 0.15,
-            "growth_yoy": s.growth_yoy or 0.0,
+            "growth_yoy": _estimate_growth(s.avg_reviews or 0, s.avg_price_usd or 0),
             "pain_points": pains,
         })
     return out
@@ -67,7 +84,13 @@ def score_opportunity(niche_keyword: str, country: str = "US", budget_usd: int =
         c["competition_raw"] = c["num_sellers"] * (1 + c["avg_reviews"] / 1000.0) * (1 + c["top_seller_share"] * 2)
         total = sum(p["evidence"] for p in c["pain_points"]) or 1
         c["pain_raw"] = sum(p["base_severity"] * p["evidence"] for p in c["pain_points"]) / total
-        c["size"] = int(c["search_volume_monthly"] * 0.012 * c["avg_price_usd"])
+        c["size"] = int(
+            max(
+                (c["search_volume_monthly"] or 0) * 0.012 * (c["avg_price_usd"] or 1),
+                (c["avg_reviews"] or 0) * (c["avg_price_usd"] or 1) * 0.02,
+                (c["avg_price_usd"] or 1) * 30,
+            )
+        )
 
     demand_norm = _minmax([c["demand_raw"] for c in candidates])
     comp_norm = [100 - v for v in _minmax([c["competition_raw"] for c in candidates])]

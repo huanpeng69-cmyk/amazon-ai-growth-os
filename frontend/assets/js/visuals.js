@@ -11,6 +11,12 @@ function money(n) {
   return "$" + Math.round(n);
 }
 
+function growthPct(v) {
+  /* 年增速格式化：0 或 null/undefined → N/A（数据不可用）；否则显示百分比 */
+  if (v == null || v === 0) return "N/A";
+  return (v * 100).toFixed(0) + "%";
+}
+
 function scoreColor(s) {
   if (s >= 75) return "var(--good)";
   if (s >= 60) return "var(--ai-3)";

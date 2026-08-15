@@ -773,7 +773,7 @@ const Views = {
               <div class="top"><div><div class="rank">#${o.rank} 潜力产品</div><h3>${esc(o.product_name)}</h3></div>${scoreRing(o.opportunity_score, 52)}</div>
               <div class="stats">
                 <div class="stat"><b>${money(o.market_size_monthly_usd)}</b><span>月规模</span></div>
-                <div class="stat"><b>${(o.market_size_growth_yoy * 100).toFixed(0)}%</b><span>年增速</span></div>
+                <div class="stat"><b>${growthPct(o.market_size_growth_yoy)}</b><span>年增速</span></div>
                 <div class="stat"><span class="badge ${o.competition_level.toLowerCase()}">${o.competition_level} 竞争</span></div>
               </div>
               <div class="pains">${o.top_pain_points.slice(0, 2).map((p) => `<div class="pain">${esc(p.pain)}</div>`).join("")}</div>
@@ -1222,7 +1222,7 @@ function openDetail(o) {
           <div style="display:flex;gap:10px;margin-bottom:12px">${scoreRing(o.opportunity_score, 64)}<div style="font-size:12.5px;color:var(--txt-2);align-self:center">综合机会评分<br><b style="color:#fff;font-size:15px">${o.opportunity_score} / 100</b></div></div>
           <div class="stats" style="display:flex;gap:18px;margin-bottom:12px">
             <div class="stat"><b>${money(o.market_size_monthly_usd)}</b><span>月规模</span></div>
-            <div class="stat"><b>${(o.market_size_growth_yoy * 100).toFixed(0)}%</b><span>年增速</span></div>
+            <div class="stat"><b>${growthPct(o.market_size_growth_yoy)}</b><span>年增速</span></div>
             <div class="stat"><span class="badge ${o.competition_level.toLowerCase()}">${o.competition_level}</span></div>
           </div>
           <div class="pains">${o.top_pain_points.map((p) => `<div class="pain" style="font-size:13px;color:var(--txt-1)">• ${esc(p.pain)} <span style="color:var(--txt-3)">(severity ${p.severity})</span></div>`).join("")}</div>
@@ -1353,7 +1353,7 @@ async function runRadar(view, country, category, budget) {
     const top = ops[0];
     const insightText = `AI 洞察：当前市场最值得切入的是「${top.product_name}」（机会评分 ${top.opportunity_score}）。`
       + `其竞争度为 ${top.competition_level}，月规模约 ${money(top.market_size_monthly_usd)}，`
-      + `年增速 ${(top.market_size_growth_yoy * 100).toFixed(0)}%。核心突破口是用户未被满足的「${top.top_pain_points[0]?.pain || "需求"}」，`
+      + `年增速 ${growthPct(top.market_size_growth_yoy)}。核心突破口是用户未被满足的「${top.top_pain_points[0]?.pain || "需求"}」，`
       + `建议以差异化卖点切入，优先验证前 3 个机会。`;
 
     const reportHtml = `
@@ -1379,7 +1379,7 @@ async function runRadar(view, country, category, budget) {
         </div>
         <div class="stats">
           <div class="stat"><b>${money(o.market_size_monthly_usd)}</b><span>月规模</span></div>
-          <div class="stat"><b>${(o.market_size_growth_yoy * 100).toFixed(0)}%</b><span>年增速</span></div>
+          <div class="stat"><b>${growthPct(o.market_size_growth_yoy)}</b><span>年增速</span></div>
           <div class="stat"><span class="badge ${o.competition_level.toLowerCase()}">${o.competition_level} 竞争</span></div>
         </div>
         <div class="pains">${o.top_pain_points.slice(0, 2).map((p) => `<div class="pain">${esc(p.pain)}</div>`).join("")}</div>

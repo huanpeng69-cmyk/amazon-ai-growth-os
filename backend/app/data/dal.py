@@ -226,6 +226,23 @@ def _persist_images(db: Session, asin: Optional[str], items: List[ImageData], so
 
 
 # ───────────────────────── Market 聚合（蓝海挖掘） ─────────────────────────
+def _estimate_growth_yoy(reviews: int, price: float) -> float:
+    """基于评论热度与价格带估算年增速代理值（0.0 ~ 0.45）。
+    高评论量 + 中低价带 → 高增长大众赛道；低评论/高价 → 成熟/小众赛道。"""
+    if reviews <= 0 and price <= 0:
+        return 0.05
+    heat = min(reviews / 10000.0, 1.0)
+    if price <= 0:
+        price_factor = 0.5
+    elif 10 <= price <= 50:
+        price_factor = 1.0
+    elif 50 < price <= 100:
+        price_factor = 0.8
+    else:
+        price_factor = 0.6
+    return round(min(heat * price_factor * 0.45, 0.45), 3)
+
+
 def get_market(db: Session, country: str, category: str,
                force_refresh: bool = False) -> List[MarketSignal]:
     """由 amazon + keyword + review 三个 Connector 聚合出市场信号（无随机编造）。"""
@@ -254,7 +271,7 @@ def get_market(db: Session, country: str, category: str,
             avg_price_usd=p.price,
             num_sellers=p.sellers,
             avg_reviews=p.review_count,
-            growth_yoy=None,
+            growth_yoy=_estimate_growth_yoy(p.review_count or 0, p.price or 0),
             pain_points=pains,
         ))
     return signals

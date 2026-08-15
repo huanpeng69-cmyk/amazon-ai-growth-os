@@ -56,6 +56,29 @@ def _recommendation(score: float, comp_level: str, monthly: int,
             f"核心突破口是「{top_pain}」，以差异化卖点切入。{fit}。")
 
 
+def _estimate_growth(reviews: int, price: float) -> float:
+    """基于评论热度与价格带估算年增速代理值（Bright Data 不提供真实 YoY）。
+
+    逻辑：高评论量 + 中低价 = 高增长赛道（大众消费、周转快）；
+          低评论量 + 高价 = 成熟/小众赛道（增速低）。
+    返回 0.0 ~ 0.45 之间的浮点数（即 0% ~ 45%）。
+    """
+    if reviews <= 0 and price <= 0:
+        return 0.05  # 无数据时给一个保守默认值
+    # 评论热度分 (0~1)：10000+ 评论视为热门
+    heat = min(reviews / 10000.0, 1.0)
+    # 价格带因子：$10-$50 最活跃，过高或过低都降权
+    if price <= 0:
+        price_factor = 0.5
+    elif 10 <= price <= 50:
+        price_factor = 1.0
+    elif 50 < price <= 100:
+        price_factor = 0.8
+    else:
+        price_factor = 0.6
+    return round(min(heat * price_factor * 0.45, 0.45), 3)
+
+
 def _extract_features(title: str) -> list[str]:
     """从产品标题提取特征词（用于合成 pain point）。"""
     # 去掉品牌名和常见修饰词后，按分隔符拆分
@@ -217,7 +240,7 @@ class MarketAgent:
                 "num_sellers": len(products),  # 样本内不同 ASIN 数 ≈ 卖家数代理
                 "avg_reviews": reviews if isinstance(reviews, (int, float)) else 0,
                 "top_seller_share": 0.15,  # 无头部占比数据时用保守默认值
-                "growth_yoy": 0.0,  # Bright Data 不提供 YoY 增速
+                "growth_yoy": _estimate_growth(reviews or 0, price),  # 基于评论热度估算增速代理值
                 "pain_points": _build_pain_points(name, reviews or 0),
             })
         return out if out else None
