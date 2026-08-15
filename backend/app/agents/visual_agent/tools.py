@@ -271,7 +271,6 @@ def generate_images_via_tool(product_name: str, niche_keyword: str = "", style: 
 
 
 def score_image_quality(image_plan: list[dict], voc_pain_points: list | None = None) -> float:
-    pains = [p for p in (voc_pain_points or []) if p]
     n = max(1, len(image_plan))
     coverage = len(image_plan) / 7 * 40
     addressing = sum(1 for s in image_plan if s.get("pain_addressed")) / n * 30

@@ -44,7 +44,7 @@ def _narrative(s: dict, niche: str, country: str):
     )
     try:
         d = synthesize(_SYSTEM, prompt, temperature=0.3, max_tokens=700)
-    except AgnesError as e:
+    except AgnesError:
         return None
     reasons = [str(r) for r in (d.get("reasons") or []) if str(r).strip()][:4]
     positioning = (d.get("positioning") or "").strip()

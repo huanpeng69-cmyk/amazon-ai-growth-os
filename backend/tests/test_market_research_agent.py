@@ -123,8 +123,12 @@ if __name__ == "__main__":
     passed = failed = 0
     for fn in fns:
         try:
-            fn(); print(f"✓ {fn.__name__}"); passed += 1
+            fn()
+            print(f"✓ {fn.__name__}")
+            passed += 1
         except Exception:  # noqa: BLE001
-            print(f"✗ {fn.__name__}"); traceback.print_exc(); failed += 1
+            print(f"✗ {fn.__name__}")
+            traceback.print_exc()
+            failed += 1
     print(f"\n结果：{passed} 通过 / {failed} 失败 / 共 {len(fns)}")
     raise SystemExit(1 if failed else 0)

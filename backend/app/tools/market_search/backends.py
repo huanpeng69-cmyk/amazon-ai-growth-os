@@ -5,8 +5,6 @@
 """
 from __future__ import annotations
 
-from app.database import SessionLocal
-from app.data import dal
 from app.agents.market.tools import search_market
 from app.tools.base import BackendType, ToolBackend, ToolNotConfigured
 

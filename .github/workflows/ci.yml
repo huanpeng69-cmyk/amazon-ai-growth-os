@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 门禁策略：
+#   test 作业（ruff + pytest）为硬性门禁，必须全绿才能合并。
+#   type-check 作业（mypy）当前为「信息性 / 允许失败」，用于逐步暴露类型问题，
+#   待后续生产 readiness 阶段（P1-4 / P2-4）收紧为硬性门禁。
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check app tests
+
+      - name: Test (pytest)
+        run: pytest -q
+
+  type-check:
+    name: Type check (mypy, informational)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Type check (mypy)
+        run: mypy app

@@ -7,7 +7,7 @@ scan_competitors：经 Bright Data 实时抓取真实头部竞品（价格/评�
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from app.data.connectors.review_connector.connector import ReviewConnector
 from app.agents._util import llm_available, synthesize

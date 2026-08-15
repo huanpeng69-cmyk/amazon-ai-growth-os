@@ -5,9 +5,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.agents.profit.agent import ProfitAgent
 from app.agents.profit.schemas import ProfitInput, ProfitOutput

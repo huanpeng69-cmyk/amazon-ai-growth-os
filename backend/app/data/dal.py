@@ -13,7 +13,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.data.connectors import ConnectorRegistry
-from app.data.exceptions import ConnectorError, DataNotFound
+from app.data.exceptions import ConnectorError
 from app.data.models import (
     AdRecord,
     ImageRecord,

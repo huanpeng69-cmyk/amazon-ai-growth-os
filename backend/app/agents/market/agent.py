@@ -14,7 +14,6 @@ YoY），属透明启发式，非伪造的"真实增速"。
 from __future__ import annotations
 
 import logging
-import re
 from typing import Dict, List, Optional
 
 from app.agents.market.schemas import (
@@ -239,7 +238,7 @@ class MarketAgent:
                 f"竞争度 {c['competition_level']}｜机会分 {c['opportunity_score']}｜"
                 f"核心痛点「{tp}」")
         prompt = (
-            f"以下是我们筛出的潜力产品（数据来自 Amazon 真实抓取 + 真实评论归纳）：\n"
+            "以下是我们筛出的潜力产品（数据来自 Amazon 真实抓取 + 真实评论归纳）：\n"
             + "\n".join(items) + f"\n预算 ${budget_usd:,}。\n\n"
             "请基于以上真实信息，为每个产品写一句中文「进入建议」（含是否建议进入、差异化切入点）。"
             "以 JSON 数组返回，顺序与上面产品顺序一致：\n"

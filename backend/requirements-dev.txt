@@ -1,0 +1,7 @@
+# 开发 / CI 依赖（在运行时依赖 requirements.txt 基础上追加）
+# 版本与本地隔离 venv 中实测通过的版本保持一致，保证 CI 可复现。
+-r requirements.txt
+
+pytest==9.1.1
+ruff==0.16.3
+mypy==2.3.1

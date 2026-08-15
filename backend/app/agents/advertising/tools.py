@@ -15,7 +15,7 @@ import re
 
 from app.database import SessionLocal
 from app.data import dal
-from app.tools.i18n import cn_to_en, has_cjk
+from app.tools.i18n import cn_to_en
 from app.llm.agnes import agnes as _agnes
 
 logger = logging.getLogger("advertising")
@@ -164,7 +164,6 @@ def analyze_ads(product_name: str, niche_keyword: str = "", country: str = "US",
     # —— 关键词建议（绑定真实痛点，痛点中文→英文）——
     pain_kw = _pain_to_en(pains[0]) if pains else kw
     winner_kw = f"{kw} {pain_kw}".strip()
-    broad_kw = f"{product_name_en}".strip()
     loser_kw = f"{kw} cheap"
 
     actions = [

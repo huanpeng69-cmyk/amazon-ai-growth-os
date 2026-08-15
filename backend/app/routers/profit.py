@@ -8,10 +8,8 @@
 """
 from __future__ import annotations
 
-from typing import Optional
 
 from fastapi import APIRouter, Depends, File, UploadFile
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.agents.profit.report import ProfitReport, build_profit_report

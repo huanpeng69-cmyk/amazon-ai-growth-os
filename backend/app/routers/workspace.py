@@ -13,7 +13,7 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db

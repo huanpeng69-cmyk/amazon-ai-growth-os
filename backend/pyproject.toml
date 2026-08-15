@@ -1,0 +1,27 @@
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# 当前阶段只把「真实正确性」纳入硬性门禁：
+#   F  pyflakes —— 未使用导入/未使用变量/未定义名称等真实缺陷
+#   E  pycodestyle 错误（语法级）
+#   W  pycodestyle 警告
+# 风格类（UP pyupgrade / I isort / B flake8-bugbear / SIM 简化）暂不强门禁，
+# 留待后续生产 readiness 阶段逐步收紧（见 PRODUCTION_READINESS.md）。
+select = ["F", "E", "W"]
+# E501 行过长 / E402 模块级 import 不在文件顶部（本项目有意延迟 import 以先加载 .env）
+# 暂不作为硬性门禁，避免无谓重构。
+# E702 在 ruff 0.16.x 对正常单行语句（含 f-string `.strip()`）存在误报，暂屏蔽。
+ignore = ["E501", "E402", "E702"]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试文件允许未使用导入与重定义（参数化/固件常见）
+"tests/*" = ["F401", "F811"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+warn_redundant_casts = false
+no_implicit_optional = false

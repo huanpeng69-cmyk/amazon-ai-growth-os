@@ -18,7 +18,6 @@ from typing import Optional
 from sqlalchemy import (
     DateTime,
     Float,
-    ForeignKey,
     Integer,
     JSON,
     String,

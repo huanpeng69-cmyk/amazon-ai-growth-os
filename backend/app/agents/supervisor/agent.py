@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 
-from app.agents.supervisor.schemas import AgentRunResult, SupervisorInput, SupervisorPlan
+from app.agents.supervisor.schemas import AgentRunResult, SupervisorPlan
 from app.agents.supervisor.tools import SUPERVISOR_TOOLS
 
 COUNTRY_ZH = {"美国": "US", "德国": "DE", "日本": "JP", "英国": "UK",
