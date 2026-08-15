@@ -8,8 +8,6 @@ force_refresh=True 时忽略缓存，重新回源。
 """
 from __future__ import annotations
 
-import hashlib
-import json
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
@@ -21,7 +19,6 @@ from app.data.models import (
     ImageRecord,
     KeywordRecord,
     ProductRecord,
-    RawFetch,
     ReviewRecord,
 )
 from app.data.processing import (
@@ -41,26 +38,11 @@ from app.data.schemas import (
 )
 
 
-def _qhash(query: dict) -> str:
-    return hashlib.md5(json.dumps(query, sort_keys=True, default=str).encode()).hexdigest()
-
-
-def _cache_raw(db: Session, connector: str, query: dict, raw, source: str) -> None:
-    db.add(RawFetch(
-        connector=connector,
-        query_hash=_qhash(query),
-        source=source,
-        payload=raw.get("payload", {}) if isinstance(raw, dict) else raw.payload,
-    ))
-    db.commit()
-
-
 # ───────────────────────── Product ─────────────────────────
 def list_products(db: Session, keyword: Optional[str] = None, country: str = "US",
                   force_refresh: bool = False) -> List[ProductData]:
     """返回匹配关键词的商品列表（经 Connector → Processing → DB 缓存）。"""
     raw = ConnectorRegistry.get("amazon").fetch({"keyword": keyword, "country": country})
-    _cache_raw(db, "amazon", {"keyword": keyword, "country": country}, raw, raw.source)
     parsed = parse_products(raw.model_dump())
     _persist_products(db, parsed, source=raw.source)
     return parsed
@@ -117,7 +99,6 @@ def get_reviews(db: Session, asin: str, country: str = "US", max_reviews: int = 
         raw = ConnectorRegistry.get("review").fetch({"asin": asin, "country": country})
     except ConnectorError:
         return []  # 次级数据缺失不中断主流程
-    _cache_raw(db, "review", {"asin": asin, "country": country}, raw, raw.source)
     parsed = parse_reviews(raw.model_dump())[:max_reviews]
     _persist_reviews(db, asin, country, parsed, source=raw.source)
     return parsed
@@ -153,7 +134,6 @@ def get_keyword(db: Session, seed_keyword: str, country: str = "US",
         raw = ConnectorRegistry.get("keyword").fetch({"seed_keyword": seed_keyword, "country": country})
     except ConnectorError:
         return []  # 次级数据缺失不中断主流程
-    _cache_raw(db, "keyword", {"seed_keyword": seed_keyword, "country": country}, raw, raw.source)
     parsed = parse_keywords(raw.model_dump())
     _persist_keywords(db, seed_keyword, country, parsed, source=raw.source)
     return parsed
@@ -185,7 +165,6 @@ def get_ads(db: Session, asin: Optional[str] = None, country: str = "US",
         if rec:
             return _rec_to_ad(rec)
     raw = ConnectorRegistry.get("ads").fetch({"asin": asin, "country": country})
-    _cache_raw(db, "ads", {"asin": asin, "country": country}, raw, raw.source)
     parsed = parse_ads(raw.model_dump())
     _persist_ads(db, asin, country, parsed, source=raw.source)
     return parsed
@@ -228,7 +207,6 @@ def get_images(db: Session, asin: Optional[str] = None, query: Optional[str] = N
         if recs:
             return [_rec_to_image(r) for r in recs]
     raw = ConnectorRegistry.get("image").fetch({"asin": asin, "query": query, "kind": kind})
-    _cache_raw(db, "image", {"asin": asin, "query": query, "kind": kind}, raw, raw.source)
     parsed = parse_images(raw.model_dump())
     _persist_images(db, asin, parsed, source=raw.source)
     return parsed
@@ -252,11 +230,11 @@ def get_market(db: Session, country: str, category: str,
                force_refresh: bool = False) -> List[MarketSignal]:
     """由 amazon + keyword + review 三个 Connector 聚合出市场信号（无随机编造）。"""
     products = list_products(db, keyword=category, country=country, force_refresh=force_refresh)
+    # 关键词搜索量按 niche（category）聚合，所有商品共用，只需取一次
+    kw = get_keyword(db, seed_keyword=category, country=country, force_refresh=force_refresh)
+    search_volume = kw[0].search_volume if kw else None
     signals: List[MarketSignal] = []
     for p in products:
-        # 关键词搜索量（取该 niche 下第一个关键词）
-        kw = get_keyword(db, seed_keyword=category, country=country, force_refresh=force_refresh)
-        search_volume = kw[0].search_volume if kw else None
         # 评论痛点聚合
         pains: List[dict] = []
         if p.asin:

@@ -27,6 +27,7 @@ _CONFIG_SPEC: list[tuple[str, str, str]] = [
     ("WISART_MODEL", "gpt-image-2", "image"),
     ("WISART_AUTH_SCHEME", "Bearer", "image"),
     ("WISART_ASYNC", "0", "image"),
+    ("WISART_TIMEOUT", "120", "image"),  # 单次生图请求超时（秒）
     # 其它工具后端（可选切换 mock/mcp/api）
     ("TOOL_BACKEND_AMAZON_RESEARCH", "mock", "tools"),
     ("TOOL_BACKEND_VOC_ANALYSIS", "mock", "tools"),
@@ -43,7 +44,12 @@ _CONFIG_SPEC: list[tuple[str, str, str]] = [
     # 外部数据获取工具层 —— Bright Data MCP
     ("BRIGHTDATA_API_KEY", "", "mcp"),
     ("BRIGHTDATA_ENDPOINT", "https://mcp.brightdata.com/mcp", "mcp"),
+    # 服务端安全 —— 设置写入保护令牌（可选；留空则本地单用户开放）
+    ("SETTINGS_API_TOKEN", "", "security"),
 ]
+
+# security 分组仅用于 PUT 接受该键，绝不通过 GET /api/settings 回显（含脱敏）
+_HIDDEN_GROUPS = {"security"}
 
 _SECRETS = {"AGNES_API_KEY", "WISART_API_KEY", "AMAZON_CONNECTOR_API_KEY",
             "REVIEW_CONNECTOR_API_KEY", "KEYWORD_CONNECTOR_API_KEY",
@@ -58,6 +64,16 @@ _CONNECTOR_PREFIX = {
     "ads": "ADS_CONNECTOR",
     "image": "IMAGE_CONNECTOR",
 }
+
+
+def requires_settings_token() -> bool:
+    """是否已启用设置写入保护令牌。
+
+    仅在 SETTINGS_API_TOKEN 非空时返回 True——此时 PUT /api/settings 与
+    POST /api/settings/test 必须携带正确令牌，否则 401。留空（默认）保持本地
+    单用户开放，向后兼容。
+    """
+    return bool(get("SETTINGS_API_TOKEN"))
 
 
 def get_connector_config(name: str) -> dict:
@@ -95,9 +111,11 @@ def mask(value: str) -> str:
 
 
 def grouped() -> dict[str, dict[str, str]]:
-    """按分组返回配置；密钥脱敏。"""
+    """按分组返回配置；密钥脱敏。security 分组（含设置令牌）不回显。"""
     groups: dict[str, dict[str, str]] = {"text": {}, "image": {}, "tools": {}, "connectors": {}, "mcp": {}}
     for k, _, group in _CONFIG_SPEC:
+        if group in _HIDDEN_GROUPS:
+            continue  # 安全敏感配置不通过 GET 暴露
         v = CONFIG.get(k, "")
         groups[group][k] = mask(v) if k in _SECRETS else v
     groups["text"]["__hasKey"] = bool(CONFIG.get("AGNES_API_KEY"))

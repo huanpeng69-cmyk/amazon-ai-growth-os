@@ -1487,6 +1487,9 @@ async function refreshProvenance(el, connectors) {
 async function saveSettings(view) {
   const btn = view.querySelector("#sSave");
   btn.disabled = true; btn.textContent = "保存中…";
+  // 若用户填写了设置保护令牌，本次保存携带它
+  const tokEl = view.querySelector("#sToken");
+  if ( tokEl) API.setSettingsToken(tokEl.value.trim());
   const ch = {};
   const ak = view.querySelector("#sAgnesKey").value.trim(); if (ak) ch.AGNES_API_KEY = ak;
   ch.AGNES_BASE_URL = view.querySelector("#sAgnesUrl").value.trim() || "https://apihub.agnes-ai.com/v1";
@@ -1504,7 +1507,12 @@ async function saveSettings(view) {
     toast("设置已保存并即时生效（无需重启）");
     Views.settings(view);
   } catch (e) {
-    toast("保存失败：" + e.message);
+    if ((e.message || "").includes("受保护")) {
+      toast("保存被拒绝：请先在上方填入正确的设置保护令牌");
+      const t = view.querySelector("#sToken"); if (t) t.focus();
+    } else {
+      toast("保存失败：" + e.message);
+    }
   } finally {
     btn.disabled = false; btn.textContent = "保存设置";
   }
@@ -1513,13 +1521,20 @@ async function saveSettings(view) {
 async function testConn(view, target) {
   const btn = view.querySelector(target === "text" ? "#sTestText" : "#sTestImg");
   const orig = btn.textContent; btn.disabled = true; btn.textContent = "测试中…";
+  const tokEl = view.querySelector("#sToken");
+  if (tokEl) API.setSettingsToken(tokEl.value.trim());
   try {
     const r = await API.settingsTest(target);
     toast(r.ok
       ? ("✅ " + (target === "text" ? "文本接口连通" : "生图接口路由正常") + "：" + (r.detail || ""))
       : ("❌ 连接失败：" + (r.detail || "")));
   } catch (e) {
-    toast("测试请求失败：" + e.message);
+    if ((e.message || "").includes("受保护")) {
+      toast("测试被拒绝：请先在上方填入正确的设置保护令牌");
+      const t = view.querySelector("#sToken"); if (t) t.focus();
+    } else {
+      toast("测试请求失败：" + e.message);
+    }
   } finally {
     btn.disabled = false; btn.textContent = orig;
   }
@@ -1533,13 +1548,29 @@ Views.settings = function (view) {
     <div id="sBody" class="set-wrap"><div class="card empty">读取配置中…</div></div>
   `;
   const body = view.querySelector("#sBody");
-  API.settingsGet().then((d) => {
+  API.settingsGet().then(async (d) => {
     const g = d.groups || {};
     const t = g.text || {}, im = g.image || {};
     const textOn = !!t.__hasKey;
     const imgOn = (im.TOOL_BACKEND_IMAGE_GENERATION === "api") && !!im.__hasKey;
     const keyHint = (has) => (has ? "已配置 · 留空则不修改" : "粘贴 API Key 后启用");
+    // 本实例是否启用了设置保护令牌
+    let reqTok = false;
+    try {
+      const st = await API._req("GET", "/api/settings/status");
+      reqTok = !!(st && st.requires_token);
+    } catch (_) {}
+    const tokWarn = reqTok
+      ? `<div class="set-token-warn">⚠️ 本实例已启用设置保护令牌，保存或测试前请填入正确令牌。</div>`
+      : "";
+    const savedTok = API.settingsToken;
     body.innerHTML = `
+      <div class="card set-card set-token-card">
+        <div class="set-head"><div><div class="set-title">设置保护令牌</div><div class="set-sub">可选 · 后端配置 SETTINGS_API_TOKEN 后，保存/测试需携带（会话级，关闭标签页即失效）</div></div></div>
+        ${tokWarn}
+        ${settingRow("访问令牌", reqTok ? "必填" : "可选（留空则使用本地默认）", `<input id="sToken" type="password" placeholder="${reqTok ? "请输入设置保护令牌" : "未启用保护时可留空"}" autocomplete="off" value="${esc(savedTok)}">`)}
+      </div>
+
       <div class="card set-card">
         <div class="set-head"><div><div class="set-title">文本 AI · Agnes</div><div class="set-sub">驱动视觉策略与 Listing/广告 的中英翻译（OpenAI 兼容）</div></div>${statusPill(textOn, textOn ? "已启用" : "未启用")}</div>
         ${settingRow("API Key", keyHint(textOn), `<input id="sAgnesKey" type="password" placeholder="${textOn ? "已配置 · 留空则不修改" : "粘贴你的 Agnes API Key"}" autocomplete="off">`)}

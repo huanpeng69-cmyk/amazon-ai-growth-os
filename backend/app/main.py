@@ -87,9 +87,36 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+def _cors_origins() -> list[str]:
+    """可配置的 CORS 来源白名单。
+
+    - 默认仅放行同源 / 本地回环地址（后端自托管前端时即为同源）；
+    - 需跨域自托管时，用环境变量 CORS_ALLOW_ORIGINS 传逗号分隔的源列表；
+    - 仅当用户显式设置为 ``*`` 才放开为通配（不推荐对外暴露）。
+    """
+    raw = os.getenv("CORS_ALLOW_ORIGINS", "")
+    if raw.strip() == "*":
+        return ["*"]
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    # 默认回环地址（覆盖常见本地端口与调试端口）
+    defaults = [
+        "http://127.0.0.1:8002",
+        "http://localhost:8002",
+        "http://127.0.0.1:5173",
+        "http://localhost:5173",
+    ]
+    seen = set()
+    out = []
+    for o in defaults + origins:
+        if o not in seen:
+            seen.add(o)
+            out.append(o)
+    return out
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )

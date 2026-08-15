@@ -7,6 +7,18 @@ const API = {
   _forceDemo: false,      // ?demo=1 强制
   _bannerShown: false,
 
+  /* 设置写入保护令牌：后端配置 SETTINGS_API_TOKEN 后，保存/测试需携带。
+     存于 sessionStorage，关闭标签页即失效（不落盘，避免长期泄露）。 */
+  get settingsToken() {
+    try { return sessionStorage.getItem("settingsToken") || ""; } catch (_) { return ""; }
+  },
+  setSettingsToken(v) {
+    try {
+      if (v) sessionStorage.setItem("settingsToken", v);
+      else sessionStorage.removeItem("settingsToken");
+    } catch (_) {}
+  },
+
   /* 轻量健康检查，用于主动判定后端是否在线 */
   async health() {
     try {
@@ -18,12 +30,21 @@ const API = {
   },
 
   /* 统一请求入口：网络层失败 → 演示数据回退；HTTP 错误 → 原样抛出 */
-  async _req(method, path, body, isForm) {
+  async _req(method, path, body, isForm, extraHeaders) {
     let r;
+    const headers = isForm
+      ? {}
+      : (body !== undefined ? { "Content-Type": "application/json" } : {});
+    if (extraHeaders) Object.assign(headers, extraHeaders);
+    // 设置写入保护令牌（仅当本会话已填入且后端要求时携带）
+    const tk = this.settingsToken;
+    if (tk && (path === "/api/settings" || path === "/api/settings/test")) {
+      headers["X-Settings-Token"] = tk;
+    }
     try {
       r = await fetch(this.base + path, {
         method,
-        headers: isForm ? {} : (body !== undefined ? { "Content-Type": "application/json" } : {}),
+        headers,
         body: isForm ? body : (body !== undefined ? JSON.stringify(body) : undefined),
       });
     } catch (netErr) {

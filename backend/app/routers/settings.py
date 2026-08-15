@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Request
 
-from app.config_store import grouped, update as cfg_update
+from app.config_store import grouped, update as cfg_update, requires_settings_token
 from app.llm.agnes import agnes, AgnesError
 from app.tools import ToolRegistry
 
@@ -25,20 +25,51 @@ class SettingsTest(BaseModel):
     target: str = "text"  # "text" | "image"
 
 
+def _assert_token(request: Request) -> None:
+    """若已配置 SETTINGS_API_TOKEN，则写接口必须携带正确令牌。
+
+    接受两种方式：``Authorization: Bearer <token>`` 或 ``X-Settings-Token: <token>``
+    （也兼容 ``?token=`` 查询参数，便于简单调试）。
+    """
+    if not requires_settings_token():
+        return
+    expected = cfg_token()
+    provided = (
+        (request.headers.get("authorization") or "").removeprefix("Bearer ").strip()
+        or request.headers.get("x-settings-token", "").strip()
+        or (request.query_params.get("token") or "").strip()
+    )
+    if not provided or provided != expected:
+        raise HTTPException(status_code=401, detail="设置受保护：请提供正确的 X-Settings-Token")
+
+
+def cfg_token() -> str:
+    from app.config_store import get
+    return get("SETTINGS_API_TOKEN", "")
+
+
 @router.get("")
 def get_settings():
     return {"groups": grouped(), "runtime": True}
 
 
+@router.get("/status")
+def settings_status():
+    """前端据此判断是否需要展示设置保护令牌输入框。"""
+    return {"requires_token": requires_settings_token()}
+
+
 @router.put("")
-def put_settings(body: SettingsUpdate):
+def put_settings(body: SettingsUpdate, request: Request):
+    _assert_token(request)
     cfg_update(body.changes)
     return {"ok": True, "groups": grouped()}
 
 
 @router.post("/test")
-def test_settings(body: SettingsTest):
+def test_settings(body: SettingsTest, request: Request):
     """轻量连通性验证：真实打一发最小化请求，返回 ok/error。"""
+    _assert_token(request)
     if body.target == "text":
         if not agnes.enabled():
             return {"target": "text", "ok": False, "detail": "未配置 AGNES_API_KEY"}

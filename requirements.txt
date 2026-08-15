@@ -1,9 +1,17 @@
+# Amazon AI Growth OS —— 后端运行时依赖
+# 所有 HTTP 调用均使用标准库（urllib / http.client），无需额外 HTTP 客户端。
+
+# 核心 Web 框架与 ASGI 服务器
 fastapi>=0.110
 uvicorn[standard]>=0.27
-sqlalchemy>=2.0
-pydantic>=2.5
-python-multipart>=0.0.9
-# 生产环境可追加：
-# langgraph>=0.2          # 替换内置轻量编排引擎
-# pgvector>=0.2           # PostgreSQL 向量检索
-# openai>=1.0             # 接入真实 LLM 生成建议文案
+python-multipart>=0.0.9      # 利润成本上传接口（multipart/form-data）
+
+# 数据层
+sqlalchemy>=2.0             # ORM + SQLite/PostgreSQL
+pydantic>=2.5               # 配置 / 契约模型
+
+# ── 可选 / 未来扩展（按需取消注释，非运行必需）──
+# langgraph>=0.2            # 替换内置轻量编排引擎
+# pgvector>=0.2             # PostgreSQL 向量检索
+# openai>=1.0               # 若改用官方 SDK 调用 LLM/生图
+# gunicorn>=21.2            # 生产多 worker 部署（替代 uvicorn 单进程）

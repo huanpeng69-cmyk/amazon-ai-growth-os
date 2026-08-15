@@ -77,6 +77,7 @@ class ApiImageGenBackend(ToolBackend):
         auth_scheme = os.getenv("WISART_AUTH_SCHEME", "Bearer")
         model = os.getenv("WISART_MODEL", "gpt-image-2")
         is_async = os.getenv("WISART_ASYNC", "0") == "1"
+        timeout = int(os.getenv("WISART_TIMEOUT", "120") or 120)
 
         n = max(1, min(params.get("count", 7), len(_SCENES)))
         scenes = _SCENES[:n]
@@ -101,7 +102,7 @@ class ApiImageGenBackend(ToolBackend):
                 if is_async:
                     link, note = self._wisart_call_async(base, endpoint, auth_scheme, api_key, prompt, model)
                 else:
-                    link, note = self._wisart_call_sync(base, endpoint, auth_scheme, api_key, prompt, model)
+                    link, note = self._wisart_call_sync(base, endpoint, auth_scheme, api_key, prompt, model, timeout)
                 image_url = link
                 desc_txt = f"WisArt 已生成「{params['product_name']}」{scene}（{ratio}）。" + (
                     f" 链接：{link}" if link else (f" {note}" if note else ""))
@@ -130,7 +131,7 @@ class ApiImageGenBackend(ToolBackend):
         }
 
     @staticmethod
-    def _wisart_call_sync(base, endpoint, auth_scheme, api_key, prompt, model="gpt-image-2"):
+    def _wisart_call_sync(base, endpoint, auth_scheme, api_key, prompt, model="gpt-image-2", timeout=120):
         import json
         import urllib.error
         import urllib.request
@@ -150,7 +151,7 @@ class ApiImageGenBackend(ToolBackend):
         else:
             req.add_header(auth_scheme, api_key)
         try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", "ignore")[:300]
