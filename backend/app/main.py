@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.errors import install_exception_handlers
+from app.middleware import TraceIDMiddleware
 from app.security import get_current_key
 from app.ratelimit import rate_limit_default
 
@@ -89,6 +91,11 @@ app = FastAPI(
     description="完整版 AI 增长操作系统：发现产品 → 分析机会 → 设计产品 → 生成页面 → 投放广告 → 优化增长",
     lifespan=lifespan,
 )
+
+# 请求级 trace_id（先于路由执行，覆盖异常处理与日志）
+app.add_middleware(TraceIDMiddleware)
+# 统一错误包：未捕获异常 / 校验失败 / HTTPException 都返回一致 JSON（含 trace_id）
+install_exception_handlers(app)
 
 def _cors_origins() -> list[str]:
     """可配置的 CORS 来源白名单。

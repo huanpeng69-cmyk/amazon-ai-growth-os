@@ -30,7 +30,11 @@
   - 验收：`docker compose config` 校验通过（拓扑/YAML 合法）；gunicorn 配置与 app 入口经测试守护。**注**：本机 Docker Desktop 的 Linux 引擎当前未启动，未实跑 `docker build`/`docker run`，请在有守护进程的环境执行 `docker build -t amazon-ai-growth-os .` 与 `docker compose up --build` 做最终镜像层验证。
 
 ### P1 — 重要（稳定性 / 可观测性）
-- [ ] P1-1 全局异常处理 + 统一 JSON 错误包（含 trace_id）
+- [x] P1-1 全局异常处理 + 统一 JSON 错误包（含 trace_id）
+  - 交付：`backend/app/errors.py`（统一错误体 `{error, message, trace_id[, details]}`；`StarletteHTTPException` 兜底捕获 FastAPI `HTTPException` 与路由级 404、`RequestValidationError` 422 带 `details`、`Exception` 兜底 500；生产默认不泄露内部细节/堆栈，仅 `EXPOSE_ERRORS=1` 才带；保留限流 `Retry-After`/`X-RateLimit-*` 头）；`backend/app/middleware.py`（`TraceIDMiddleware`：每请求生成/复用 `X-Request-Id`/`X-Trace-Id` 为 `trace_id`，写入 `request.state` 并回写响应头 `X-Trace-Id`）；`backend/app/main.py` 接入中间件与 `install_exception_handlers`。
+  - 测试：`backend/tests/test_errors.py`（6 用例：trace_id 头存在、未捕获异常→JSON internal 非 HTML、404→not_found、429 保留 Retry-After、422→validation_error+details、EXPOSE_ERRORS 泄露堆栈）。全仓 **69 passed**，ruff 全绿。
+  - **关键坑（已记录）**：①Starlette 中 `(Exception, ...)` 不作兜底，必须挂 `StarletteHTTPException` 才能覆盖 404 与各类 HTTPException；②`TestClient` 默认 `raise_server_exceptions=True` 会把 500 抛给测试，须设 `False` 才能验证 JSON 错误体；③跨异常边界 `contextvars` 不可靠，改为 `request.state.trace_id`。
+  - 验收：真实 app 冒烟——404 返回 `{"error":"not_found",...}`、未捕获异常返回 `{"error":"internal","message":"服务器内部错误…","trace_id":...}`（无堆栈）、传入 `X-Request-Id` 被原样回显为 `X-Trace-Id`。
 - [ ] P1-2 集中日志 + 链路追踪（dictConfig 结构化日志 + 请求 ID）
 - [ ] P1-3 数据库迁移（PostgreSQL + Alembic；替换手动 `_migrate`）
 - [ ] P1-4 同步阻塞治理 + 请求整体超时（asyncio 并发 / 超时熔断）
