@@ -17,6 +17,12 @@ DATABASE_URL: str = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 APP_ENV: str = os.getenv("APP_ENV", "demo")
 
+# Agent（外部 IO：Agnes / Bright Data）整体处理超时（秒）。
+# 超过则请求被熔断返回 504（降级），避免长调用占死 worker / 客户端悬挂。
+AGENT_TIMEOUT_SECONDS: int = int(os.getenv("AGENT_TIMEOUT_SECONDS", "120"))
+# 全局请求超时（秒），作为兜底护栏（默认 5 分钟）。
+REQUEST_TIMEOUT_SECONDS: int = int(os.getenv("REQUEST_TIMEOUT_SECONDS", "300"))
+
 # 生成候选利基的市场信号数量（评分后取前 10）
 CANDIDATE_POOL_SIZE: int = 24
 TOP_N: int = 10

@@ -41,7 +41,7 @@
   - 验收：启动期/请求期日志均为 JSON 单行（实测 `advertising`/`httpx` 等 logger 输出含 `request_id`/`trace_id` 字段）；可按 `request_id`/`trace_id` 串联一次调用链（与 P1-1 错误包的 `trace_id` 一致）。
   - 备注：跨异常边界 contextvars 不可靠（同 P1-1），故错误日志在 `errors.py` 以 `extra={"trace_id":...}` 显式注入，确保 JSON 字段始终带 `trace_id`；`OpenTelemetry` 接入留作未来可选增强。
 - [x] P1-3 数据库迁移（PostgreSQL + Alembic；替换手动 `_migrate`）
-- [ ] P1-4 同步阻塞治理 + 请求整体超时（asyncio 并发 / 超时熔断）
+- [x] P1-4 同步阻塞治理 + 请求整体超时（asyncio 并发 / 超时熔断）
 - [ ] P1-5 生产配置硬化（`/docs` 关闭、CORS 收紧）
 
 ### P2 — 优化项
@@ -135,10 +135,16 @@
 - **验收**：`DATABASE_URL=sqlite:///./_empty.db alembic upgrade head` 实测在空库跑通，生成 11 张表（业务 10 + `alembic_version`）；真实 app 冒烟（`TestClient` 触发 lifespan）→ `/api/health` 200 且 DB 已含全部表。**诚实声明**：本机无真实 PostgreSQL 实例，PostgreSQL 路径通过 `DATABASE_URL` 注入与 `env.py` 双后端兼容配置 + 代码审查保证，未实连 PG 跑通；已在文档注明，请在 PG 环境终验。
 - **既有 SQLite 库升级说明（重要）**：Alembic 与旧 `create_all` 是两套 schema 管理体系。已在旧版 `create_all` 上建立的库，直接 `upgrade head` 会因表已存在而报错。新部署请用**空库**让其自举；既有库升级路径为：备份后新建库 `upgrade head` 再迁移数据，或 `alembic stamp head` 标记为已最新（仅在确认表结构与初始迁移一致时）。
 
-### P1-4 同步阻塞治理 + 请求超时
-- **问题**：agent 串行调外部（Bright Data + LLM，单次 30–60s），跑在 uvicorn threadpool；无整体请求超时；supervisor 编排多 agent 无超时（grep 无 `timeout/asyncio/gather`）。并发请求会排队/耗尽 worker。
-- **建议方案**：加全局/路由级请求超时（如 `async def` + `asyncio.wait_for` 或网关超时）；agent 间可并发的外部调用用 `asyncio.gather`；Bright Data/LLM 调用加超时与取消。
-- **验收标准**：超长 agent 调用在 N 秒后熔断返回 504/降级；并发 10 请求不耗尽线程。
+### P1-4 同步阻塞治理 + 请求整体超时
+- **问题**：agent 端点全为同步 `def`，内部串行调 Agnes（单次 60s × 3 重试 ≈ 180s）与 Bright Data，跑在 uvicorn threadpool；框架无法对长调用超时取消，长调用占死 worker、客户端悬挂。supervisor 编排无超时。
+- **方案**：引入 `backend/app/timeout.py` —— `run_blocking_with_timeout(func, *args, timeout=AGENT_TIMEOUT_SECONDS)` 用 `asyncio.to_thread` 在独立线程跑阻塞 IO，并以 `asyncio.wait_for` 设整体超时；超阈值抛 `RequestTimeoutError`。
+  - `backend/app/routers/agent.py`：8 个重端点（run/listing/image/advertising/visual/voc/competitor/market_research）全部改为 `async def`，外部调用经 `run_blocking_with_timeout` 包裹。端点改异步后，**外部 IO 期间事件循环不被阻塞**，并发请求仍可得响应；超阈值即返回 504（降级），后台线程由有界默认执行器回收。
+  - `backend/app/errors.py`：新增 `request_timeout_handler`（HTTP 504 + 统一 JSON `{"error":"timeout",...}` + `X-Trace-Id`），并注册；`RequestTimeoutError` 不被通用 500 兜底误吞。
+  - `backend/app/config.py`：新增 `AGENT_TIMEOUT_SECONDS`（默认 120，环境变量可配）、`REQUEST_TIMEOUT_SECONDS`（默认 300，兜底护栏）。
+- **测试**：`backend/tests/test_timeout.py`（4 用例：快速调用正常、慢调用返回 504 JSON timeout 且带 X-Trace-Id、RequestTimeoutError 处理器已注册、5 个 0.3s 阻塞调用经 `asyncio.gather` 并发总耗时 <1.5s）。全仓 **84 passed**，ruff 全绿。
+- **关键坑（可复用）**：①同步 `def` 端点无法被框架超时取消，必须用 `async def` + `to_thread` + `wait_for` 才能既释放事件循环又按期熔断；②`wait_for` 超时抛的是 `asyncio.TimeoutError`，需转成自定义异常再映射 504，否则会被通用 500 处理器误判；③`asyncio.to_thread` 受默认执行器线程数上限约束，并发长调用不会无限增长线程。
+- **验收**：慢调用在 `AGENT_TIMEOUT_SECONDS` 后返回 `{"error":"timeout",...}`（实测 /slow 测试 1s 超时→504）；5 路并发阻塞调用 ≈0.3s 完成（非串行 1.5s），证明事件循环未被阻塞、线程并发生效。
+- **诚实声明**：Agent 内部（如 MarketResearchAgent 内 Bright Data 取数 + 多轮 Agnes）的**细粒度并发**（`asyncio.gather` 并行多个独立外部调用）未在本轮逐 agent 改造——本轮先解决「端点级超时 + 事件循环不被阻塞」这一根因；各 agent 内部可在不破坏既有诚实降级契约前提下逐步引入 `gather`，属后续增量优化。
 
 ### P1-5 生产配置硬化
 - **问题**：`/docs` 未关闭；CORS `allow_methods/headers=["*"]` 偏宽；`.env` 写回逻辑需注意文件权限。

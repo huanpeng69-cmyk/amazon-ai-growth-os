@@ -20,6 +20,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.timeout import RequestTimeoutError
+
 logger = logging.getLogger("aigos.errors")
 
 
@@ -90,6 +92,18 @@ def validation_exception_handler(request: Request, exc: RequestValidationError) 
     return resp
 
 
+def request_timeout_handler(request: Request, exc: RequestTimeoutError) -> JSONResponse:
+    """Agent 调用整体超时（P1-4）：返回 504 + 统一 JSON，便于前端降级重试。"""
+    trace_id = _trace_id(request)
+    resp = JSONResponse(
+        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+        content=_error_body("timeout", str(exc) or "请求处理超时", trace_id),
+    )
+    if trace_id:
+        resp.headers["X-Trace-Id"] = trace_id
+    return resp
+
+
 def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     trace_id = _trace_id(request)
     # 服务端永远记录完整堆栈，便于排障；extra 显式带 trace_id 以对齐 JSON 日志字段
@@ -118,4 +132,5 @@ def install_exception_handlers(app: FastAPI) -> None:
     """
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(RequestTimeoutError, request_timeout_handler)
     app.add_exception_handler(Exception, unhandled_exception_handler)
