@@ -15,7 +15,9 @@ class CompetitorAgent:
 
     def run(self, inp: CompetitorInput) -> CompetitorOutput:
         scan = next(t for t in COMPETITOR_TOOLS if t["name"] == "scan_competitors")["handler"]
-        rows = scan(inp.niche_keyword, inp.country, inp.top_n)
+        res = scan(inp.niche_keyword, inp.country, inp.top_n)
+        rows = res.get("profiles", [])
+        summary = res.get("summary", "")
 
         competitors = [
             CompetitorProfile(
@@ -23,11 +25,8 @@ class CompetitorAgent:
                 rating=r["rating"], est_market_share=r["est_market_share"], weakness=r["weakness"])
             for r in rows
         ]
-        top = competitors[0]
-        summary = (f"「{inp.niche_keyword}」头部由 {len(competitors)} 个主要卖家占据，"
-                   f"榜首 {top.name} 约 {top.est_market_share*100:.0f}% 份额、评分 {top.rating}、"
-                   f"评论 {top.avg_reviews:,}。共性软肋为「{top.weakness}」，"
-                   f"可作为差异化切入方向。")
+        if not competitors:
+            summary = summary or f"未能从 Amazon 检索到「{inp.niche_keyword}」的真实竞品数据。"
         return CompetitorOutput(
             niche_keyword=inp.niche_keyword, country=inp.country,
             competitors=competitors, summary=summary)

@@ -37,4 +37,4 @@ class AdvertisingOutput(BaseModel):
     metrics: List[AdMetric]
     campaign_actions: List[CampaignAction]
     budget_recommendation: str
-    efficiency_score: float = Field(..., description="广告效率 0-100（供生命周期评分）")
+    efficiency_score: Optional[float] = Field(None, description="广告效率 0-100（无真实广告数据时为空）")

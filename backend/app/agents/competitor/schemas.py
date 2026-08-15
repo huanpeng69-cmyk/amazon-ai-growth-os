@@ -18,7 +18,7 @@ class CompetitorProfile(BaseModel):
     price_usd: float
     avg_reviews: int
     rating: float
-    est_market_share: float = Field(..., description="估计市场份额 0-1")
+    est_market_share: Optional[float] = Field(None, description="估计市场份额 0-1（无真实数据源时为 None，不编造）")
     weakness: str
 
 

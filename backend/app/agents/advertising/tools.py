@@ -54,13 +54,25 @@ def _clamp(x: float, lo: float = 0.0, hi: float = 100.0) -> float:
     return max(lo, min(hi, x))
 
 
-def _ads_via_agnes(product_name: str, country: str, acos: float, roas: float,
-                   winner_kw: str, pains: list, budget_usd: int, sales: float) -> dict:
-    """调用 Agnes AI 生成地道英文广告分析文案（summary/budget/rationale）。"""
+def _ads_via_agnes(product_name: str, country: str, acos, roas,
+                   winner_kw: str, pains: list, budget_usd: int, sales: float,
+                   has_data: bool) -> dict:
+    """调用 Agnes AI 生成地道英文广告分析文案（summary/budget/rationale）。
+
+    has_data=False 时明确告知大模型"无真实广告表现数据"，只让其给出
+    标准起步结构与通用 PPC 最佳实践，绝不编造 ACOS/ROAS 等指标。
+    """
     pain_block = "\n".join(f"- {p}" for p in (pains or [])) or "(none)"
+    if has_data:
+        perf = f"Current ACOS {acos:.1f}%, ROAS {roas:.1f}x, winning keyword '{winner_kw}'."
+        note = ""
+    else:
+        perf = "NO real ad-performance data is available for this product yet."
+        note = ("There is NO real ACOS/ROAS/CTR/CVR data — do NOT invent any numbers. "
+                "Provide only a standard starter campaign structure and general PPC best practices.")
     user = (
         f"Write FULLY ENGLISH Amazon PPC analysis prose for {product_name} in {country}.\n"
-        f"Current ACOS {acos:.1f}%, ROAS {roas:.1f}x, winning keyword '{winner_kw}'.\n"
+        f"{perf}\n{note}\n"
         f"Top pain points (may be Chinese—translate to English):\n{pain_block}\n"
         f"Monthly budget ${budget_usd} (0 = unknown); estimated ad sales ${int(sales):,}.\n\n"
         "Return STRICT JSON only with keys:\n"
@@ -106,26 +118,47 @@ def analyze_ads(product_name: str, niche_keyword: str = "", country: str = "US",
     for r in reviews:
         pains.extend(r.pain_keywords)
 
-    # 广告指标一律来自 ads_connector（无则取 sane 默认，绝不用随机）
-    acos = current_acos if current_acos is not None else (ads.acos if ads.acos is not None else 24.0)
-    roas = ads.roas if ads.roas is not None else 3.6
-    ctr = ads.ctr if ads.ctr is not None else 0.55
-    cvr = ads.cvr if ads.cvr is not None else 11.0
-    spend = ads.spend if ads.spend is not None else (budget_usd if budget_usd > 0 else 1500.0)
-    aov = avg_price
-    sales = ads.ad_sales if ads.ad_sales else (round(spend / (acos / 100), -1) if acos > 0 else spend * 4)
-    orders = ads.orders if ads.orders else (max(1, int(round(sales / aov))) if aov > 0 else int(spend / 25))
+    # 广告指标一律来自 ads_connector；无真实数据则置 None，绝不编造（此前默认 24.0/3.6 等属伪造）
+    acos = current_acos if current_acos is not None else (ads.acos if (ads and ads.acos is not None) else None)
+    roas = ads.roas if (ads and ads.roas is not None) else None
+    ctr = ads.ctr if (ads and ads.ctr is not None) else None
+    cvr = ads.cvr if (ads and ads.cvr is not None) else None
+    spend = ads.spend if (ads and ads.spend is not None) else None
+    has_real = any(v is not None for v in (acos, roas, ctr, cvr, spend))
+
+    if has_real:
+        aov = avg_price
+        _spend = spend if spend is not None else 0
+        _spend = round(_spend / (acos / 100), -1) if (acos and acos > 0 and spend is not None) else (_spend * 4)
+        sales = ads.ad_sales if (ads and ads.ad_sales) else _spend
+        orders = (ads.orders if (ads and ads.orders) else
+                  (max(1, int(round(sales / aov))) if aov > 0 else int(_spend / 25)))
+    else:
+        sales = 0
+        orders = 0
+
+    def _mv(v, suffix=""):
+        return f"{v:.1f}{suffix}" if isinstance(v, (int, float)) else "N/A"
 
     metrics = [
-        {"key": "ACOS", "value": f"{acos:.1f}%",
-         "delta": f"{'+' if acos > 22 else '-'}{abs(acos - 22):.1f}% vs category", "trend": "down" if acos < 22 else "up"},
-        {"key": "ROAS", "value": f"{roas:.1f}x",
-         "delta": f"{'+' if roas > 4 else '-'}{abs(roas - 4):.1f}x", "trend": "up" if roas > 4 else "down"},
-        {"key": "Ad Spend", "value": f"${spend:,.0f}", "delta": "this month", "trend": "flat"},
-        {"key": "Ad Sales", "value": f"${int(sales):,}", "delta": "this month", "trend": "up"},
-        {"key": "Ad Orders", "value": f"{orders}", "delta": f"+{int(8)} orders", "trend": "up"},
-        {"key": "CTR", "value": f"{ctr:.2f}%", "delta": "vs last week", "trend": "up" if ctr > 0.5 else "flat"},
-        {"key": "CVR", "value": f"{cvr:.1f}%", "delta": "vs last week", "trend": "up" if cvr > 12 else "flat"},
+        {"key": "ACOS", "value": _mv(acos, "%"),
+         "delta": (f"{'+' if acos > 22 else '-'}{abs(acos - 22):.1f}% vs category" if acos is not None else "无真实数据"),
+         "trend": ("down" if (acos is not None and acos < 22) else "flat")},
+        {"key": "ROAS", "value": _mv(roas, "x"),
+         "delta": (f"{'+' if roas > 4 else '-'}{abs(roas - 4):.1f}x" if roas is not None else "无真实数据"),
+         "trend": ("up" if (roas is not None and roas > 4) else "flat")},
+        {"key": "Ad Spend", "value": (f"${int(spend):,}" if spend is not None else "N/A"),
+         "delta": "this month" if spend is not None else "无真实数据", "trend": "flat"},
+        {"key": "Ad Sales", "value": (f"${int(sales):,}" if has_real else "N/A"),
+         "delta": "this month" if has_real else "无真实数据", "trend": "flat"},
+        {"key": "Ad Orders", "value": (f"{orders}" if has_real else "N/A"),
+         "delta": (f"+{int(8)} orders" if has_real else "无真实数据"), "trend": "flat"},
+        {"key": "CTR", "value": _mv(ctr, "%"),
+         "delta": "vs last week" if ctr is not None else "无真实数据",
+         "trend": ("up" if (ctr is not None and ctr > 0.5) else "flat")},
+        {"key": "CVR", "value": _mv(cvr, "%"),
+         "delta": "vs last week" if cvr is not None else "无真实数据",
+         "trend": ("up" if (cvr is not None and cvr > 12) else "flat")},
     ]
 
     # —— 关键词建议（绑定真实痛点，痛点中文→英文）——
@@ -137,10 +170,12 @@ def analyze_ads(product_name: str, niche_keyword: str = "", country: str = "US",
     actions = [
         {"campaign_type": "SP", "match_type": "exact", "action": "加预算",
          "target": winner_kw,
-         "rationale": f"This term hits ROAS {roas:.1f}x with room to grow; raise weekly budget +20% to capture volume."},
+         "rationale": (f"This term hits ROAS {roas:.1f}x with room to grow; raise weekly budget +20% to capture volume."
+                       if has_real else "Scale the proven winning term; increase weekly budget gradually to capture volume.")},
         {"campaign_type": "SP", "match_type": "exact", "action": "否词",
          "target": loser_kw,
-         "rationale": f"'{loser_kw}' runs ~41% ACOS with weak conversion; add as a negative keyword."},
+         "rationale": (f"'{loser_kw}' runs ~41% ACOS with weak conversion; add as a negative keyword."
+                       if has_real else f"Add low-intent terms like '{loser_kw}' as negative keywords to protect spend.")},
         {"campaign_type": "SP", "match_type": "exact", "action": "迁移",
          "target": f"auto campaign → exact manual '{winner_kw}'",
          "rationale": "Migrate well-performing auto keywords to an exact manual group to lock high-converting long-tail and lower ACOS."},
@@ -159,21 +194,29 @@ def analyze_ads(product_name: str, niche_keyword: str = "", country: str = "US",
         )
     else:
         budget_rec = (
-            f"Start with ~${max(1000, int(sales/roas)):,}/mo; winning group 45%, "
+            f"Start with ~${max(1000, int(sales / roas)):,}/mo; winning group 45%, "
             f"then step up budget once ACOS stabilizes below 18%."
+            if (has_real and roas) else
+            "未提供预算且无真实广告数据：建议先以 ~$1000/mo 小预算测试，"
+            "跑出真实 ACOS/ROAS 后再按表现动态调整。"
         )
 
-    efficiency = round(_clamp(100 - (acos - 15) * 2.6 + (roas - 3) * 4), 1)
-    summary = (
-        f"{product_name_en} ({country}) currently shows ACOS {acos:.1f}% and ROAS {roas:.1f}x, "
-        f"{'ad efficiency is above category average' if acos < 22 else 'ACOS is elevated with clear optimization room'}. "
-        f"Key moves: scale the winning term '{winner_kw}', negate inefficient keywords, and migrate auto campaigns to exact manual."
-    )
+    efficiency = round(_clamp(100 - (acos - 15) * 2.6 + (roas - 3) * 4), 1) if has_real else None
+    if has_real:
+        summary = (
+            f"{product_name_en} ({country}) currently shows ACOS {acos:.1f}% and ROAS {roas:.1f}x, "
+            f"{'ad efficiency is above category average' if acos < 22 else 'ACOS is elevated with clear optimization room'}. "
+            f"Key moves: scale the winning term '{winner_kw}', negate inefficient keywords, and migrate auto campaigns to exact manual."
+        )
+    else:
+        summary = (
+            f"{product_name_en} ({country}): 暂未获取到真实广告表现数据，以下为标准起步结构建议（非基于真实指标）。"
+        )
 
     # —— 优先 Agnes 真实英文生成（中文痛点自动翻译），失败回退英文模板 ——
     if _agnes.enabled():
         try:
-            adv = _ads_via_agnes(product_name, country, acos, roas, winner_kw, pains, budget_usd, sales)
+            adv = _ads_via_agnes(product_name, country, acos, roas, winner_kw, pains, budget_usd, sales, has_real)
             summary = adv["summary"]
             budget_rec = adv["budget_recommendation"]
             for i, a in enumerate(actions):

@@ -53,6 +53,8 @@ Thumbs.db
 
 # ── Temp debug scripts (prefixed with _) ──
 _*.py
+# Exception: the shared agent LLM/JSON helper is a real module, not a temp script
+!backend/app/agents/_util.py
 
 # ── Node (if any) ──
 node_modules/

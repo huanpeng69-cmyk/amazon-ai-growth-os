@@ -15,6 +15,7 @@
 """
 from __future__ import annotations
 
+import http.client
 import json
 import urllib.error
 import urllib.request
@@ -92,18 +93,36 @@ class AgnesClient:
 
     # —— 内部 ——
     def _post(self, url: str, payload: dict) -> dict:
+        """POST 到 Agnes，对瞬时网络/5xx 错误自动重试。
+
+        关键：任何失败（含 http.client.RemoteDisconnected、URLError、OSError、
+        JSON 解析失败）都统一包装为 AgnesError，绝不向调用方抛出裸网络异常，
+        从而保证上层 except AgnesError 的降级逻辑一定能被触发（不会 500）。
+        """
         body = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(url, data=body, method="POST")
-        req.add_header("Content-Type", "application/json")
-        req.add_header("Authorization", f"Bearer {self.api_key}")
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
-            detail = e.read().decode("utf-8", "ignore")[:500]
-            raise AgnesError(f"Agnes API HTTP {e.code}: {detail}") from e
-        except urllib.error.URLError as e:
-            raise AgnesError(f"Agnes API 网络错误: {e.reason}") from e
+        last_err: Exception | None = None
+        for _ in range(3):  # 1 次原请求 + 2 次重试，扛过瞬时断开/限流
+            req = urllib.request.Request(url, data=body, method="POST")
+            req.add_header("Content-Type", "application/json")
+            req.add_header("Authorization", f"Bearer {self.api_key}")
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                # 4xx 客户端错误（401/403/400）重试无意义，直接抛
+                if e.code != 429 and e.code < 500:
+                    detail = e.read().decode("utf-8", "ignore")[:500]
+                    raise AgnesError(f"Agnes API HTTP {e.code}: {detail}") from e
+                last_err = e  # 429 / 5xx 可重试
+                continue
+            except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
+                # 含 RemoteDisconnected、连接重置、DNS/超时等瞬时网络错误
+                last_err = e
+                continue
+            except json.JSONDecodeError as e:
+                last_err = e
+                continue
+        raise AgnesError(f"Agnes API 调用失败（重试 3 次仍失败）: {last_err}") from last_err
 
 
 # 模块级单例（配置运行时可变，调用时读取最新值）

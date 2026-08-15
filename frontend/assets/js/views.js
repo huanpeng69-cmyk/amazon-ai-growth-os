@@ -1257,7 +1257,7 @@ function openAgentReport(kind, data, q) {
           <div class="card voice fade-up" style="animation-delay:${(i * 0.05).toFixed(2)}s">
             <div class="ph" style="font-size:15px;font-weight:600">${esc(c.name)}</div>
             <div class="meta"><span>价格 <b>$${Math.round(c.price_usd)}</b></span><span>评分 ${c.rating}</span><span>评论 ${c.avg_reviews}</span></div>
-            <div class="meta" style="margin-top:6px"><span>估计份额 <b>${(c.est_market_share * 100).toFixed(1)}%</b></span></div>
+            <div class="meta" style="margin-top:6px"><span>估计份额 <b>${c.est_market_share != null ? (c.est_market_share * 100).toFixed(1) + "%" : "暂无真实数据"}</b></span></div>
             <div class="fix" style="margin-top:8px">⚠️ 软肋：${esc(c.weakness)}</div>
           </div>`).join("")}
       </div>
