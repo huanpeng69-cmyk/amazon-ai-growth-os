@@ -67,11 +67,17 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# 生产环境关闭交互式文档与 OpenAPI schema，避免泄露端点细节
+_PROD = os.getenv("APP_ENV", "demo") == "production"
+
 app = FastAPI(
     title="Amazon AI Growth OS",
     version="1.0.0",
     description="完整版 AI 增长操作系统：发现产品 → 分析机会 → 设计产品 → 生成页面 → 投放广告 → 优化增长",
     lifespan=lifespan,
+    docs_url=None if _PROD else "/docs",
+    redoc_url=None if _PROD else "/redoc",
+    openapi_url=None if _PROD else "/openapi.json",
 )
 
 # 请求级 trace_id（先于路由执行，覆盖异常处理与日志）
@@ -109,8 +115,10 @@ def _cors_origins() -> list[str]:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # 收敛为实际使用的动词（不再通配），降低预检被滥用的面
+    allow_methods=["GET", "POST", "OPTIONS"],
+    # 仅放行实际会用到的请求头（API Key 走 X-API-Key / Authorization）
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 # 受保护路由：统一要求 API Key（若已配置 API_AUTH_TOKEN）。

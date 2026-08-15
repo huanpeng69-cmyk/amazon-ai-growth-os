@@ -42,7 +42,7 @@
   - 备注：跨异常边界 contextvars 不可靠（同 P1-1），故错误日志在 `errors.py` 以 `extra={"trace_id":...}` 显式注入，确保 JSON 字段始终带 `trace_id`；`OpenTelemetry` 接入留作未来可选增强。
 - [x] P1-3 数据库迁移（PostgreSQL + Alembic；替换手动 `_migrate`）
 - [x] P1-4 同步阻塞治理 + 请求整体超时（asyncio 并发 / 超时熔断）
-- [ ] P1-5 生产配置硬化（`/docs` 关闭、CORS 收紧）
+- [x] P1-5 生产配置硬化（`/docs` 关闭、CORS 收紧）
 
 ### P2 — 优化项
 - [ ] P2-1 结果缓存层（keyword+country TTL）
@@ -147,9 +147,11 @@
 - **诚实声明**：Agent 内部（如 MarketResearchAgent 内 Bright Data 取数 + 多轮 Agnes）的**细粒度并发**（`asyncio.gather` 并行多个独立外部调用）未在本轮逐 agent 改造——本轮先解决「端点级超时 + 事件循环不被阻塞」这一根因；各 agent 内部可在不破坏既有诚实降级契约前提下逐步引入 `gather`，属后续增量优化。
 
 ### P1-5 生产配置硬化
-- **问题**：`/docs` 未关闭；CORS `allow_methods/headers=["*"]` 偏宽；`.env` 写回逻辑需注意文件权限。
-- **建议方案**：`FastAPI(docs_url=None)` 在生产（`ENV=production`）关闭 `/docs` `/redoc`；CORS methods/headers 收敛为实际所需；settings 写回 `.env` 限制权限（0600）。
-- **验收标准**：生产环境 `/docs` 404；CORS 仅放行声明的方法/头。
+- **问题**：`/docs` `/redoc` `/openapi.json` 默认全开，泄露端点细节；CORS `allow_methods/headers=["*"]` 偏宽。
+- **方案**：`backend/app/main.py` 在构造 `FastAPI` 时按 `APP_ENV=="production"` 关闭 `docs_url`/`redoc_url`/`openapi_url`（默认 demo 仍开放，便于本地联调）；CORS 收敛为 `allow_methods=["GET","POST","OPTIONS"]`、`allow_headers=["Content-Type","Authorization","X-API-Key"]`（不再通配）。`pythonpath`/`.env` 写回权限（`0600`）延续既有 `config_store` 既有逻辑，本项未改动。
+- **测试**：`backend/tests/test_production_hardening.py`（3 用例：demo 下 /docs 200、production 下 /docs//redoc//openapi.json 全 404、CORS allow-methods/headers 无 `*` 且含 x-api-key/authorization）。全仓 **87 passed**，ruff 全绿。
+- **验收**：`APP_ENV=production` 启动后 `/docs` 404、`/openapi.json` 404；跨域预检 `Access-Control-Allow-Methods` 仅 `GET, POST, OPTIONS`、无 `*`。
+- **诚实声明**：仅做「开关 + 收敛」最稳妥的一部分；更激进项（如 production 下 CORS 完全不允许浏览器跨域、强制 HTTPS/HSTS、CSRF）属于纵深防御，留作后续。
 
 ---
 
