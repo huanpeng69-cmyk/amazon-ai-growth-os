@@ -35,7 +35,11 @@
   - 测试：`backend/tests/test_errors.py`（6 用例：trace_id 头存在、未捕获异常→JSON internal 非 HTML、404→not_found、429 保留 Retry-After、422→validation_error+details、EXPOSE_ERRORS 泄露堆栈）。全仓 **69 passed**，ruff 全绿。
   - **关键坑（已记录）**：①Starlette 中 `(Exception, ...)` 不作兜底，必须挂 `StarletteHTTPException` 才能覆盖 404 与各类 HTTPException；②`TestClient` 默认 `raise_server_exceptions=True` 会把 500 抛给测试，须设 `False` 才能验证 JSON 错误体；③跨异常边界 `contextvars` 不可靠，改为 `request.state.trace_id`。
   - 验收：真实 app 冒烟——404 返回 `{"error":"not_found",...}`、未捕获异常返回 `{"error":"internal","message":"服务器内部错误…","trace_id":...}`（无堆栈）、传入 `X-Request-Id` 被原样回显为 `X-Trace-Id`。
-- [ ] P1-2 集中日志 + 链路追踪（dictConfig 结构化日志 + 请求 ID）
+- [x] P1-2 集中日志 + 链路追踪（dictConfig 结构化日志 + 请求 ID）
+  - 交付：`backend/app/logging_config.py`（`configure_logging()` 用 `logging.config.dictConfig` 把根日志配为**单行 JSON** 输出到 stdout，字段含 `timestamp`/`level`/`logger`/`message`/`request_id`/`trace_id`/`module`/`func`/`line`/异常 `error`；异常以 `exc_text` 附加）；手写 `JsonFormatter`（零新依赖，沿用标准库风格）；`request_id_var`(contextvars) 由 `TraceIDMiddleware` 在请求内注入（与 P1-1 `trace_id` 同源，`X-Trace-Id` 回显，`X-Request-Id` 复用）；`app/main.py` 在导入期调用 `configure_logging()` 并把 `_migrate` 裸 `print` 改为 logger。
+  - 测试：`backend/tests/test_logging.py`（4 用例：JSON 合法单行含全部字段、请求内日志带 `request_id` 且与响应头 `X-Trace-Id` 一致、异常日志经 `extra` 带 `trace_id`、真实 app 接入冒烟）。全仓 **75 passed**，ruff 全绿。
+  - 验收：启动期/请求期日志均为 JSON 单行（实测 `advertising`/`httpx` 等 logger 输出含 `request_id`/`trace_id` 字段）；可按 `request_id`/`trace_id` 串联一次调用链（与 P1-1 错误包的 `trace_id` 一致）。
+  - 备注：跨异常边界 contextvars 不可靠（同 P1-1），故错误日志在 `errors.py` 以 `extra={"trace_id":...}` 显式注入，确保 JSON 字段始终带 `trace_id`；`OpenTelemetry` 接入留作未来可选增强。
 - [ ] P1-3 数据库迁移（PostgreSQL + Alembic；替换手动 `_migrate`）
 - [ ] P1-4 同步阻塞治理 + 请求整体超时（asyncio 并发 / 超时熔断）
 - [ ] P1-5 生产配置硬化（`/docs` 关闭、CORS 收紧）

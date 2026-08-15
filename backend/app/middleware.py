@@ -10,6 +10,8 @@ import uuid
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
+from app.logging_config import request_id_var
+
 
 def _incoming_trace_id(request: Request) -> str:
     for header in ("x-trace-id", "x-request-id"):
@@ -25,6 +27,11 @@ class TraceIDMiddleware(BaseHTTPMiddleware):
         trace_id = _incoming_trace_id(request)
         # 写入 request.state（异常处理器从此读取，跨异常边界更稳）
         request.state.trace_id = trace_id
-        response = await call_next(request)
+        # 写入 contextvars：请求处理流内（含被丢到线程池的 sync 端点）的日志可注入 request_id
+        token = request_id_var.set(trace_id)
+        try:
+            response = await call_next(request)
+        finally:
+            request_id_var.reset(token)
         response.headers["X-Trace-Id"] = trace_id
         return response

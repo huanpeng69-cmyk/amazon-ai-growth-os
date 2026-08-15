@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -16,6 +17,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.errors import install_exception_handlers
+from app.logging_config import configure_logging
 from app.middleware import TraceIDMiddleware
 from app.security import get_current_key
 from app.ratelimit import rate_limit_default
@@ -41,6 +43,10 @@ def _load_env_file() -> None:
 
 
 _load_env_file()
+
+# 集中式 JSON 日志（必须在创建 app / 导入 routers 之前，确保启动期日志也被结构化）
+configure_logging()
+logger = logging.getLogger("aigos.main")
 
 from .database import init_db, engine
 from .routers import agent as agent_router
@@ -75,7 +81,7 @@ def _migrate() -> None:
             if alters:
                 conn.commit()
     except Exception as e:  # 表不存在等情况交给 create_all，忽略
-        print("[migrate] skipped:", e)
+        logger.warning("migrate skipped: %s", e)
 
 
 @asynccontextmanager

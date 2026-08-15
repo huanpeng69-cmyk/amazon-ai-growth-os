@@ -92,8 +92,11 @@ def validation_exception_handler(request: Request, exc: RequestValidationError) 
 
 def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     trace_id = _trace_id(request)
-    # 服务端永远记录完整堆栈，便于排障
-    logger.error("未捕获异常 trace_id=%s path=%s: %s", trace_id, request.url.path, exc, exc_info=True)
+    # 服务端永远记录完整堆栈，便于排障；extra 显式带 trace_id 以对齐 JSON 日志字段
+    logger.error(
+        "未捕获异常 path=%s: %s", request.url.path, exc, exc_info=True,
+        extra={"trace_id": trace_id, "request_id": trace_id},
+    )
     message = "服务器内部错误，请稍后重试或凭 trace_id 联系支持"
     if _is_debug():
         message = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
