@@ -46,6 +46,8 @@ _CONFIG_SPEC: list[tuple[str, str, str]] = [
     ("BRIGHTDATA_ENDPOINT", "https://mcp.brightdata.com/mcp", "mcp"),
     # 服务端安全 —— 设置写入保护令牌（可选；留空则本地单用户开放）
     ("SETTINGS_API_TOKEN", "", "security"),
+    # API 全局鉴权令牌（可选；留空则所有 /api/* 路由开放，便于本地演示）
+    ("API_AUTH_TOKEN", "", "security"),
 ]
 
 # security 分组仅用于 PUT 接受该键，绝不通过 GET /api/settings 回显（含脱敏）

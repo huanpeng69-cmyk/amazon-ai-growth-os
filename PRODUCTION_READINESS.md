@@ -12,7 +12,12 @@
     `backend/pytest.ini`（pythonpath）、`backend/pyproject.toml`（ruff/mypy 配置）、
     `backend/requirements-dev.txt`、` .github/workflows/ci.yml`。
   - **门禁范围**：`ruff` 当前只把「真实正确性」（`F`/`E`/`W`）纳入硬性门禁，风格类（`UP`/`I`/`B`/`SIM`/`E501`/`E402`/`E702`）暂忽略，避免无谓重构；`mypy` 当前为**允许失败的信息性步骤**（全仓 143 文件基本无类型标注，共 114 处类型不一致，含若干潜在真实 bug 如 `lifecycle/service.py` 访问不存在的 `MarketOutput.title`），待 P1-4 / P2-4 收紧。
-- [ ] P0-2 API 认证 / 授权中间件（Bearer/API Key；写操作强制 token）
+- [x] P0-2 API 认证 / 授权中间件（Bearer/API Key；写操作强制 token）
+  - 交付：`backend/app/security.py`（`get_current_key` 依赖，支持 Bearer / X-API-Key / `?api_key`）；
+    `main.py` 对所有业务路由（agent/blue_ocean/tools/lifecycle/workspace/profit/data）统一挂该依赖，
+    `/api/health` 与 `/` 静态开放；`API_AUTH_TOKEN` 仅在配置时强制（未配置保持开放，向后兼容）。
+  - 测试：`backend/tests/test_auth.py`（6 用例，TestClient 验证开放/401/Bearer/X-API-Key/query/错误 Key）。
+  - 验收：未配 key 调用业务接口 200；配 key 无令牌 401；配 key 且正确令牌放行。
 - [ ] P0-3 速率限制 / 配额（slowapi+redis；Bright Data 重试+退避+并发信号量）
 - [ ] P0-4 可复现构建（Dockerfile + 版本锁定 + gunicorn 多 worker）
 
@@ -65,6 +70,7 @@
   - 全局默认要求 key；`/api/health`、`/` 静态资源可放行。
   - settings 写接口（`PUT /api/settings`）强制 `SETTINGS_API_TOKEN`（现有机制复用并强化）。
 - **验收标准**：无有效 key 调用 agent 接口返回 401；写配置无 token 返回 403。
+- **✅ 已完成（2026-08-04）**：见上方总览 P0-2 注释。`get_current_key` 已挂到全部业务路由；`API_AUTH_TOKEN` 仅在配置时强制，未配置保持本地开放。settings 写接口沿用 `SETTINGS_API_TOKEN`（本项未改动其逻辑）。
 
 ### P0-3 速率限制 / 配额
 - **问题**：

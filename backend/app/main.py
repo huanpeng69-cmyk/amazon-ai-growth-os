@@ -10,10 +10,12 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+from app.security import get_current_key
 
 
 def _load_env_file() -> None:
@@ -121,14 +123,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(blue_ocean.router)
-app.include_router(agent_router.router)
-app.include_router(tools_router.router)
-app.include_router(lifecycle_router.router)
+# 受保护路由：统一要求 API Key（若已配置 API_AUTH_TOKEN）。
+# /api/health 与 / 静态资源不在此列，保持开放。
+_PROTECTED_ROUTERS = [
+    blue_ocean,
+    agent_router,
+    tools_router,
+    lifecycle_router,
+    workspace_router,
+    profit_router,
+    data_router,
+]
+for _m in _PROTECTED_ROUTERS:
+    app.include_router(_m.router, dependencies=[Depends(get_current_key)])
+
+# settings 路由有独立的 SETTINGS_API_TOKEN 写保护，不叠加全局 API Key。
 app.include_router(settings_router.router)
-app.include_router(workspace_router.router)
-app.include_router(profit_router.router)
-app.include_router(data_router.router)
 
 
 @app.get("/api/health")
