@@ -42,6 +42,10 @@ test_tools.py
 preview.png
 dist
 
+# ── 前端依赖（镜像内由 node 阶段 npm ci 重新安装，不进上下文）──
+node_modules
+frontend/node_modules
+
 # ── 编辑器 / OS ──
 .vscode
 .idea

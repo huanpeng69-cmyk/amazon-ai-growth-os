@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 
 import pytest
 from fastapi.testclient import TestClient
@@ -52,3 +53,32 @@ def test_cors_methods_and_headers_tightened():
     assert "GET" in allow_methods and "POST" in allow_methods
     assert "x-api-key" in allow_headers.lower()
     assert "authorization" in allow_headers.lower()
+
+
+def test_csp_header_present_in_production(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    importlib.reload(app_main)
+    try:
+        c = TestClient(app_main.app)
+        r = c.get("/api/health")
+        csp = r.headers.get("content-security-policy", "")
+        assert csp, "生产环境必须注入 Content-Security-Policy"
+        # 关键指令存在且收紧
+        assert "default-src 'self'" in csp
+        assert "object-src 'none'" in csp
+        assert "base-uri 'self'" in csp
+        # 不允许从任意外部源加载脚本（除非显式追加，否则不应出现 http: 通配）
+        assert "script-src 'self'" in csp
+        # 收紧数据外泄面：connect 仅同源
+        assert "connect-src 'self'" in csp
+    finally:
+        monkeypatch.delenv("APP_ENV", raising=False)
+        importlib.reload(app_main)
+
+
+def test_csp_header_absent_in_demo_by_default():
+    # 仅生产注入；demo 模式（源码直跑 / 本地 Vite）不加，避免误伤
+    assert os.getenv("APP_ENV", "demo") != "production"
+    c = TestClient(app_main.app)
+    r = c.get("/api/health")
+    assert "content-security-policy" not in r.headers

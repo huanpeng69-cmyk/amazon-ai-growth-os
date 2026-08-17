@@ -46,7 +46,7 @@
 
 ### P2 — 优化项
 - [x] P2-1 结果缓存层（keyword+country TTL）
-- [ ] P2-2 前端构建 / 打包（Vite + 哈希 + CSP）
+- [x] P2-2 前端构建 / 打包（Vite + 哈希 + CSP）
 - [ ] P2-3 API 版本化（`/api/v1`）
 - [ ] P2-4 配置校验（pydantic-settings）
 - [ ] P2-5 image agent 接真实生图后端（去掉默认 mock）
@@ -164,10 +164,18 @@
 - **验收**：同输入二次调用 `cached=True` 且 LLM 仅 1 次；TTL 可配；全仓测试 91 通过、ruff 通过。
 - **已知限制**：仅 `market_research` agent 接入；其余 agent 如需缓存可复用同一 `TTLCache` 模式后续扩展。
 
-### P2-2 前端构建 / 打包
-- **问题**：`frontend/` 为 vanilla 静态 SPA（`index.html` + `assets/js/*.js`），无 `package.json`/Vite/打包/压缩/哈希/CSP。
-- **建议方案**：引入 Vite 构建（minify + 资源哈希 + sourcemap 管理）；加 `Content-Security-Policy` 响应头；`dist/` 作为构建产物。
-- **验收标准**：`npm run build` 产出带哈希的压缩资源；CSP 生效。
+### P2-2 前端构建 / 打包 ✅ 已完成（2026-08-17）
+- **问题**：`frontend/` 为 vanilla 静态 SPA（`index.html` + `assets/js/*.js`），无 `package.json`/构建/压缩/哈希/CSP。
+- **方案**：
+  - **构建**（`frontend/build.mjs` + esbuild）：对 `assets/{js,css}` 做 minify + **内容哈希**重命名，并重写 `index.html` 的资源引用（去掉源码里的 `?v=3` 戳，改由哈希接管缓存击穿）；产物落到 `frontend/dist/`。
+  - **为何不用 Vite ESM 重写**：现有 SPA 是全局脚本风格（跨文件引用 `API`/`toast`/各 `renderXxx`，无 import/export），强行改 ESM 是高风险且无测试覆盖的破坏性修改。esbuild 仅做「等价压缩 + 哈希」，运行时语义与源码完全一致，零侵入，且 `dist` 不存在时后端自动回退到源码。
+  - **开发服务器**：`frontend/vite.config.js` 提供 `npm run dev`（5173，带 `/static`→`/assets` 重写插件 + `/api` 代理到 8002）。
+  - **CSP**（`backend/app/csp.py`）：仅 `APP_ENV=production` 注入。策略收紧 `default-src 'self'`、`object-src 'none'`、`base-uri 'self'`、`connect-src 'self'`、`img-src 'self' data: https:`、仅放开 Google Fonts；因 `views.js` 含受控内联 `onclick=/onerror=` 处理器，`script-src/style-src` 保留 `'unsafe-inline'`（详见模块 docstring 的取舍与后续严格化路径）。
+  - **后端适配**（`main.py`）：`FRONTEND_DIR` 优先指向 `frontend/dist`，回退到未构建源码。
+  - **Docker**：多阶段构建（node 阶段 `npm ci && npm run build`，仅把 `frontend/dist` 拷入 python 镜像），`.dockerignore` 排除 `node_modules`/`frontend/node_modules`。
+- **交付**：`frontend/package.json`、`frontend/build.mjs`、`frontend/vite.config.js`、`backend/app/csp.py`、`main.py`（dist 优先 + CSP 注入）、`Dockerfile`（多阶段）、`.dockerignore`、`tests/test_production_hardening.py`（新增 CSP 用例）。
+- **验收**：`npm run build` 产出带内容哈希的压缩资源 + 重写后的 `index.html`；生产模式下所有响应带 CSP 头（测试覆盖）；全仓测试通过、ruff 通过。
+- **已知限制**：CSP 因内联处理器保留 `'unsafe-inline'`（非严格态）；后续把 `views.js` 内联处理器改为 `addEventListener` 后可去掉 `'unsafe-inline'` 并引入 nonce。
 
 ### P2-3 API 版本化
 - **问题**：`/api/agent` 等无版本前缀，迭代会破坏前端。

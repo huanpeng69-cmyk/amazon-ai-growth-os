@@ -58,7 +58,10 @@ from .routers import workspace as workspace_router
 from .routers import profit as profit_router
 from .routers import data as data_router
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
+# 前端目录：优先使用生产构建产物 dist/（由 frontend/ 的 `npm run build` 生成，
+# 资源带内容哈希、已压缩）；dist 不存在时回退到未构建的源码（本地零构建可直接演示）。
+_FRONTEND_SRC = Path(__file__).resolve().parent.parent.parent / "frontend"
+FRONTEND_DIR = _FRONTEND_SRC / "dist" if (_FRONTEND_SRC / "dist").exists() else _FRONTEND_SRC
 
 
 @asynccontextmanager
@@ -82,6 +85,13 @@ app = FastAPI(
 
 # 请求级 trace_id（先于路由执行，覆盖异常处理与日志）
 app.add_middleware(TraceIDMiddleware)
+
+# 内容安全策略（CSP）：仅生产环境注入，避免误伤本地 Vite 开发服务器 / 源码直跑。
+# 策略细节见 app/csp.py（含 'unsafe-inline' 取舍说明）。
+if _PROD:
+    from app.csp import CSPMiddleware
+
+    app.add_middleware(CSPMiddleware)
 # 统一错误包：未捕获异常 / 校验失败 / HTTPException 都返回一致 JSON（含 trace_id）
 install_exception_handlers(app)
 

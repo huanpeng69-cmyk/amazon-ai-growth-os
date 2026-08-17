@@ -6,6 +6,19 @@
 #     docker run --rm -p 8000:8000 amazon-ai-growth-os
 # 打开 http://127.0.0.1:8000/  （健康检查 /api/health）
 # ============================================================
+
+# —— 阶段 1：前端生产构建（minify + 内容哈希）——
+FROM node:20-alpine AS frontend-build
+WORKDIR /fe
+# 先装依赖以最大化层缓存
+COPY frontend/package.json ./package.json
+COPY frontend/package-lock.json ./package-lock.json
+RUN npm ci --no-audit --no-fund
+# 再拷源码并构建（产出 frontend/dist/）
+COPY frontend/ ./frontend
+RUN cd frontend && npm run build
+
+# —— 阶段 2：Python 运行时 ——
 FROM python:3.13-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
@@ -24,9 +37,11 @@ RUN pip install -r requirements.lock
 # 2) 创建非 root 运行用户
 RUN useradd --create-home --uid 10001 appuser
 
-# 3) 拷贝后端代码与前端静态资源（.dockerignore 已排除缓存/测试/DB/日志）
+# 3) 拷贝后端代码与前端静态资源
+#    - backend/ 完整拷贝
+#    - 前端仅拷贝「已构建产物」frontend/dist（来自前端构建阶段），不再带源码
 COPY backend/ ./backend/
-COPY frontend/ ./frontend/
+COPY --from=frontend-build /fe/frontend/dist ./frontend/dist
 
 # 4) 运行时数据目录（SQLite 落盘点，可用卷持久化）
 RUN mkdir -p /app/backend/data && chown -R appuser:appuser /app

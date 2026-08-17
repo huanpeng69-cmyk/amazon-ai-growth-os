@@ -1,0 +1,15 @@
+{
+  "name": "amazon-ai-growth-os-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Amazon AI Growth OS 前端（vanilla SPA）—— 生产构建：minify + 内容哈希 + index.html 重写",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "npm i -D vite >/dev/null 2>&1; vite",
+    "preview": "npm i -D vite >/dev/null 2>&1; vite preview"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  }
+}
