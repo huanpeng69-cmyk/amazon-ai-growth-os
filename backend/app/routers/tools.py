@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from app.tools import ToolRegistry
 from app.tools.base import ToolError, ToolNotConfigured
 
-router = APIRouter(prefix="/api/tools", tags=["tools"])
+router = APIRouter(prefix="/api/v1/tools", tags=["tools"])
 
 
 class ToolRunRequest(BaseModel):

@@ -14,7 +14,7 @@ from app.config_store import grouped, update as cfg_update, requires_settings_to
 from app.llm.agnes import agnes, AgnesError
 from app.tools import ToolRegistry
 
-router = APIRouter(prefix="/api/settings", tags=["settings"])
+router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
 
 class SettingsUpdate(BaseModel):

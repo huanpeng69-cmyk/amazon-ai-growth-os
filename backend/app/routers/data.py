@@ -28,7 +28,7 @@ from app.data.models import (
 )
 from app.database import get_db
 
-router = APIRouter(prefix="/api/data", tags=["data"])
+router = APIRouter(prefix="/api/v1/data", tags=["data"])
 
 # 探测用查询：尽量命中各 fixture 中真实存在的样本键
 _PROBES = {

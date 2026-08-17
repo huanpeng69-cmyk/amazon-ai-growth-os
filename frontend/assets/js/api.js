@@ -38,7 +38,7 @@ const API = {
     if (extraHeaders) Object.assign(headers, extraHeaders);
     // 设置写入保护令牌（仅当本会话已填入且后端要求时携带）
     const tk = this.settingsToken;
-    if (tk && (path === "/api/settings" || path === "/api/settings/test")) {
+    if (tk && (path === "/api/v1/settings" || path === "/api/v1/settings/test")) {
       headers["X-Settings-Token"] = tk;
     }
     try {
@@ -71,35 +71,35 @@ const API = {
     const DD = window.DEMO_DATA;
     if (!DD) return undefined;
     // 蓝海雷达：按类目选择示例
-    if (path === "/api/blue-ocean/research") {
+    if (path === "/api/v1/blue-ocean/research") {
       const cat = (body && body.category) || "Beauty";
       return DD.blueocean[cat] || DD.blueocean[cat.toLowerCase()] || DD.blueocean.__default;
     }
-    if (path === "/api/agent/run") return DD.run;
-    if (path === "/api/agent/listing") return DD.listing;
-    if (path === "/api/agent/image") return DD.image;
-    if (path === "/api/agent/advertising") return DD.advertising;
-    if (path === "/api/agent/visual") return DD.visual;
-    if (path === "/api/agent/voc") return DD.voc;
-    if (path === "/api/agent/profit") return DD.profit;
-    if (path === "/api/agent/market_research") return DD.market_research;
-    if (path === "/api/data/connectors") return DD.connectors;
-    if (path === "/api/lifecycle" && method === "GET") return DD.lifecycle;
-    if (path === "/api/workspace/products") return DD.workspace_products;
-    if (path === "/api/workspace" && method === "GET")
+    if (path === "/api/v1/agent/run") return DD.run;
+    if (path === "/api/v1/agent/listing") return DD.listing;
+    if (path === "/api/v1/agent/image") return DD.image;
+    if (path === "/api/v1/agent/advertising") return DD.advertising;
+    if (path === "/api/v1/agent/visual") return DD.visual;
+    if (path === "/api/v1/agent/voc") return DD.voc;
+    if (path === "/api/v1/agent/profit") return DD.profit;
+    if (path === "/api/v1/agent/market_research") return DD.market_research;
+    if (path === "/api/v1/data/connectors") return DD.connectors;
+    if (path === "/api/v1/lifecycle" && method === "GET") return DD.lifecycle;
+    if (path === "/api/v1/workspace/products") return DD.workspace_products;
+    if (path === "/api/v1/workspace" && method === "GET")
       return { active: null, products: DD.workspace_products };
     // 写操作 / 设置：演示模式返回成功桩，避免界面报错
-    if (path === "/api/settings" && method === "GET")
+    if (path === "/api/v1/settings" && method === "GET")
       return { demo: true, configured: {}, available: ["bright_data", "agnes", "wisart"], providers: {} };
-    if (path === "/api/settings" && method === "PUT") return { ok: true, demo: true };
-    if (path === "/api/settings/test") return { ok: true, demo: true, message: "演示模式：跳过真实校验" };
-    if (path === "/api/workspace/context" && method === "PUT") return { ok: true, demo: true };
-    if (path === "/api/lifecycle" && method === "POST") return { ok: true, demo: true };
-    if (path === "/api/tools/") return undefined;
-    if (path.startsWith("/api/tools/")) return { demo: true, note: "演示模式不支持工具直调" };
-    if (path.startsWith("/api/workspace/") && path.endsWith("/activate"))
+    if (path === "/api/v1/settings" && method === "PUT") return { ok: true, demo: true };
+    if (path === "/api/v1/settings/test") return { ok: true, demo: true, message: "演示模式：跳过真实校验" };
+    if (path === "/api/v1/workspace/context" && method === "PUT") return { ok: true, demo: true };
+    if (path === "/api/v1/lifecycle" && method === "POST") return { ok: true, demo: true };
+    if (path === "/api/v1/tools/") return undefined;
+    if (path.startsWith("/api/v1/tools/")) return { demo: true, note: "演示模式不支持工具直调" };
+    if (path.startsWith("/api/v1/workspace/") && path.endsWith("/activate"))
       return { ok: true, demo: true };
-    if (path.startsWith("/api/lifecycle/") && path.endsWith("/advance"))
+    if (path.startsWith("/api/v1/lifecycle/") && path.endsWith("/advance"))
       return { ok: true, demo: true };
     return undefined;
   },
@@ -125,59 +125,59 @@ const API = {
   async blueOcean(country, category, budgetUsd, productId) {
     const body = { country, category, budget_usd: budgetUsd };
     if (productId) body.product_id = productId;
-    return this._req("POST", "/api/blue-ocean/research", body);
+    return this._req("POST", "/api/v1/blue-ocean/research", body);
   },
 
   async runAgent(query) {
-    return this._req("POST", "/api/agent/run", { query });
+    return this._req("POST", "/api/v1/agent/run", { query });
   },
 
   async tool(name, input, backend) {
     const body = { input };
     if (backend) body.backend = backend;
-    return this._req("POST", "/api/tools/" + name, body);
+    return this._req("POST", "/api/v1/tools/" + name, body);
   },
 
-  async listing(input) { return this._req("POST", "/api/agent/listing", input); },
-  async imageGen(input) { return this._req("POST", "/api/agent/image", input); },
-  async advertising(input) { return this._req("POST", "/api/agent/advertising", input); },
-  async visual(input) { return this._req("POST", "/api/agent/visual", input); },
-  async voc(input) { return this._req("POST", "/api/agent/voc", input); },
+  async listing(input) { return this._req("POST", "/api/v1/agent/listing", input); },
+  async imageGen(input) { return this._req("POST", "/api/v1/agent/image", input); },
+  async advertising(input) { return this._req("POST", "/api/v1/agent/advertising", input); },
+  async visual(input) { return this._req("POST", "/api/v1/agent/visual", input); },
+  async voc(input) { return this._req("POST", "/api/v1/agent/voc", input); },
 
-  async linkage(productId) { return this._req("GET", "/api/workspace/" + productId + "/linkage"); },
+  async linkage(productId) { return this._req("GET", "/api/v1/workspace/" + productId + "/linkage"); },
 
-  async lifecycleCreate(input) { return this._req("POST", "/api/lifecycle", input); },
-  async lifecycleList() { return this._req("GET", "/api/lifecycle"); },
-  async lifecycleGet(id) { return this._req("GET", "/api/lifecycle/" + id); },
+  async lifecycleCreate(input) { return this._req("POST", "/api/v1/lifecycle", input); },
+  async lifecycleList() { return this._req("GET", "/api/v1/lifecycle"); },
+  async lifecycleGet(id) { return this._req("GET", "/api/v1/lifecycle/" + id); },
   async lifecycleAdvance(id) {
-    return this._req("POST", "/api/lifecycle/" + id + "/advance", {});
+    return this._req("POST", "/api/v1/lifecycle/" + id + "/advance", {});
   },
 
-  async settingsGet() { return this._req("GET", "/api/settings"); },
-  async settingsPut(changes) { return this._req("PUT", "/api/settings", { changes }); },
-  async settingsTest(target) { return this._req("POST", "/api/settings/test", { target }); },
+  async settingsGet() { return this._req("GET", "/api/v1/settings"); },
+  async settingsPut(changes) { return this._req("PUT", "/api/v1/settings", { changes }); },
+  async settingsTest(target) { return this._req("POST", "/api/v1/settings/test", { target }); },
 
-  async dataConnectors() { return this._req("GET", "/api/data/connectors"); },
+  async dataConnectors() { return this._req("GET", "/api/v1/data/connectors"); },
   async dataProvenance(connectors) {
     const qs = (connectors && connectors.length)
       ? "?connectors=" + connectors.map(encodeURIComponent).join(",") : "";
-    return this._req("GET", "/api/data/provenance" + qs);
+    return this._req("GET", "/api/v1/data/provenance" + qs);
   },
 
-  async workspaceGet() { return this._req("GET", "/api/workspace"); },
-  async workspaceProducts() { return this._req("GET", "/api/workspace/products"); },
+  async workspaceGet() { return this._req("GET", "/api/v1/workspace"); },
+  async workspaceProducts() { return this._req("GET", "/api/v1/workspace/products"); },
   async workspaceActivate(id) {
-    return this._req("POST", "/api/workspace/" + id + "/activate", {});
+    return this._req("POST", "/api/v1/workspace/" + id + "/activate", {});
   },
-  async workspaceSave(ctx) { return this._req("PUT", "/api/workspace/context", ctx); },
+  async workspaceSave(ctx) { return this._req("PUT", "/api/v1/workspace/context", ctx); },
 
-  async profit(input) { return this._req("POST", "/api/agent/profit", input); },
-  async marketResearch(input) { return this._req("POST", "/api/agent/market_research", input); },
+  async profit(input) { return this._req("POST", "/api/v1/agent/profit", input); },
+  async marketResearch(input) { return this._req("POST", "/api/v1/agent/market_research", input); },
 
   async profitUploadCost(file) {
     const fd = new FormData();
     fd.append("file", file);
-    const r = await fetch(this.base + "/api/profit/upload_cost", { method: "POST", body: fd });
+    const r = await fetch(this.base + "/api/v1/profit/upload_cost", { method: "POST", body: fd });
     if (!r.ok) throw new Error("upload failed: " + r.status);
     return r.json();
   },

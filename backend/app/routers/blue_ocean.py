@@ -14,7 +14,7 @@ from ..database import get_db
 from ..routers.workspace import load_product_for, store_module_output
 from ..schemas import BlueOceanRequest, BlueOceanResult, PainPoint, ProductOpportunityOut
 
-router = APIRouter(prefix="/api/blue-ocean", tags=["blue-ocean"])
+router = APIRouter(prefix="/api/v1/blue-ocean", tags=["blue-ocean"])
 
 
 def _persist(db: Session, output) -> models.ResearchTask:

@@ -32,7 +32,7 @@ from ..routers.workspace import fill_input, load_product_for, store_module_outpu
 from ..database import get_db
 from ..tools.base import ToolNotConfigured
 
-router = APIRouter(prefix="/api/agent", tags=["agent"])
+router = APIRouter(prefix="/api/v1/agent", tags=["agent"])
 
 
 @router.post("/run", response_model=AgentRunResult, dependencies=[Depends(rate_limit_heavy)])

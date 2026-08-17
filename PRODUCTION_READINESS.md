@@ -47,7 +47,7 @@
 ### P2 — 优化项
 - [x] P2-1 结果缓存层（keyword+country TTL）
 - [x] P2-2 前端构建 / 打包（Vite + 哈希 + CSP）
-- [ ] P2-3 API 版本化（`/api/v1`）
+- [x] P2-3 API 版本化（`/api/v1`）
 - [ ] P2-4 配置校验（pydantic-settings）
 - [ ] P2-5 image agent 接真实生图后端（去掉默认 mock）
 
@@ -179,8 +179,11 @@
 
 ### P2-3 API 版本化
 - **问题**：`/api/agent` 等无版本前缀，迭代会破坏前端。
-- **建议方案**：路由加 `/api/v1` 前缀（保持旧路径重定向或并行一期）。
-- **验收标准**：新接口带 `/api/v1`；前端调用统一走 v1。
+- **方案**：所有业务路由统一加 `/api/v1` 前缀（`app/routers/*.py` 的 `APIRouter(prefix=...)` 全部改为 `/api/v1/...`）；`/api/health` 作为元端点保持未版本化向后兼容；前端 `api.js`/`views.js` 所有业务调用改为 `/api/v1/`，`/api/health` 保留。
+- **前端适配**：`frontend/assets/js/api.js` 批量 `/api/`→`/api/v1/`（仅 health 不动）；`views.js` 的 `/api/settings/status` 同步改 v1。
+- **测试**：`tests/test_api_versioning.py` 锁定契约——业务路由全在 `/api/v1/`、`/api/health` 不版本化、旧裸前缀返回 404、v1 端点可达。
+- **验收**：`openapi.json` 中 31 个业务端点全部 `/api/v1/`，无遗留 `/api/agent` 等；全仓测试通过。
+- **已知限制**：未做旧路径 301 重定向（一次性破坏性迁移，前端已同步）。若需兼容旧前端可后续补 redirect。
 
 ### P2-4 配置校验
 - **问题**：`config_store` 全字符串、无 pydantic-settings 校验；类型/范围错误只在运行时暴露。

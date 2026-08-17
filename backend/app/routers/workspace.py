@@ -20,7 +20,7 @@ from ..database import get_db
 from ..lifecycle.models import GrowthProduct, StageArtifact
 from ..lifecycle.schemas import GrowthProductOut
 
-router = APIRouter(prefix="/api/workspace", tags=["workspace"])
+router = APIRouter(prefix="/api/v1/workspace", tags=["workspace"])
 
 # 输入字段名 → GrowthProduct 属性名 的映射（用于把产品空间字段回填进各 Agent 入参）
 FIELD_MAP = {

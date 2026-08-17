@@ -8,7 +8,7 @@ from ..database import get_db
 from ..lifecycle.schemas import CreateProductRequest, GrowthProductOut
 from ..lifecycle import service
 
-router = APIRouter(prefix="/api/lifecycle", tags=["lifecycle"])
+router = APIRouter(prefix="/api/v1/lifecycle", tags=["lifecycle"])
 
 
 @router.post("", response_model=GrowthProductOut)

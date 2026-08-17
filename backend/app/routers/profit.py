@@ -23,7 +23,7 @@ from app.data import dal
 from app.database import get_db
 from .workspace import load_product_for, store_module_output
 
-router = APIRouter(prefix="/api", tags=["profit"])
+router = APIRouter(prefix="/api/v1", tags=["profit"])
 
 
 @router.post("/agent/profit", response_model=ProfitReport)

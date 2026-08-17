@@ -1557,7 +1557,7 @@ Views.settings = function (view) {
     // 本实例是否启用了设置保护令牌
     let reqTok = false;
     try {
-      const st = await API._req("GET", "/api/settings/status");
+      const st = await API._req("GET", "/api/v1/settings/status");
       reqTok = !!(st && st.requires_token);
     } catch (_) {}
     const tokWarn = reqTok

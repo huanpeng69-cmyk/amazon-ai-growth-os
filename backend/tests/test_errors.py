@@ -76,7 +76,7 @@ def test_unhandled_exception_returns_json_not_html():
 
 def test_http_exception_404_mapped():
     c = _client(real_app)
-    r = c.get("/api/blue-ocean/nonexistent-task-id")
+    r = c.get("/api/v1/blue-ocean/nonexistent-task-id")
     assert r.status_code == 404
     body = r.json()
     assert body["error"] == "not_found"
@@ -101,7 +101,7 @@ def test_429_preserves_retry_after_header():
 def test_validation_error_returns_json_with_details():
     c = _client(real_app)
     # 受保护路由但无 quota 问题；缺必填字段触发 pydantic 422
-    r = c.post("/api/agent/run", json={"not_a_valid_field": 1})
+    r = c.post("/api/v1/agent/run", json={"not_a_valid_field": 1})
     assert r.status_code == 422
     body = r.json()
     assert body["error"] == "validation_error"
