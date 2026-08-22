@@ -177,9 +177,9 @@ class AgnesImageGenBackend(ToolBackend):
 
     复用已配置的 AgnesClient（agnes.py 单例），当 AGNES_API_KEY 已设置时
     直接调用 agnes.generate_image(prompt) 获取真实图片 URL / base64。
-    无 Key 时回退 Mock 行为（保证离线可用）。
+    无 Key 时回退占位说明（保证离线可用，且不伪造真实图片）。
     """
-    backend_type = BackendType.API  # 复用 API 类型，通过配置 TOOL_BACKEND_IMAGE_GENERATION=api 激活
+    backend_type = BackendType.AGNES  # 通过配置 TOOL_BACKEND_IMAGE_GENERATION=agnes 激活
 
     def execute(self, params: dict) -> dict:
         from app.llm.agnes import agnes as _agnes_client
@@ -242,4 +242,7 @@ class McpImageGenBackend(ToolBackend):
 
     def execute(self, params: dict) -> dict:
         cmd = self.config.get("server_command") or "ecom-details-image-mcp"
-        return self._call_mcp_skeleton(cmd, "generate_image_plan", params)
+        raise ToolNotConfigured(
+            "image_generation MCP 后端未接入：请补全 ecom-details-image MCP 的 "
+            f"generate_image_plan 调用（server={cmd}）。"
+        )

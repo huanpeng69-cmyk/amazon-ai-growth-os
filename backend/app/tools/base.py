@@ -20,8 +20,9 @@ class BackendType(str, Enum):
     """工具后端类型。未来新增后端只需扩展此枚举并在工具里注册适配器。"""
     MOCK = "mock"            # 本地确定性实现（离线演示 / 兜底）
     MCP = "mcp"              # 外部 MCP Server（如 Bright Data / Sorftime / Sif / easy-amazon-voc）
-    API = "api"              # 外部 REST API（密钥鉴权，如 SellerSprite / Stability）
+    API = "api"              # 外部 REST API（密钥鉴权，如 SellerSprite / Stability / WisArt）
     LOCAL_MODEL = "local_model"  # 本地模型（开源权重，如 SDXL / 本地 LLM 分类）
+    AGNES = "agnes"          # Agnes AI 文生图（复用已配置的 AgnesClient 图像模型）
 
 
 class ToolError(Exception):

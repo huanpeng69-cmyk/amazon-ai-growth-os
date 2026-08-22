@@ -6,6 +6,7 @@ from app.tools.image_generation.schemas import ImageGenInput, ImageGenOutput
 from app.tools.image_generation.backends import (
     MockImageGenBackend,
     ApiImageGenBackend,
+    AgnesImageGenBackend,
     LocalModelImageGenBackend,
     McpImageGenBackend,
 )
@@ -19,6 +20,7 @@ class ImageGenerationTool(BaseTool):
     _backends = {
         BackendType.MOCK: MockImageGenBackend,
         BackendType.API: ApiImageGenBackend,  # WisArt 文生图（智画创）
+        BackendType.AGNES: AgnesImageGenBackend,  # Agnes AI 文生图（复用 AgnesClient）
         BackendType.LOCAL_MODEL: LocalModelImageGenBackend,
         BackendType.MCP: McpImageGenBackend,
     }
