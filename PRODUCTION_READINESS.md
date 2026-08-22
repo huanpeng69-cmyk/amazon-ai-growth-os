@@ -48,8 +48,8 @@
 - [x] P2-1 结果缓存层（keyword+country TTL）
 - [x] P2-2 前端构建 / 打包（Vite + 哈希 + CSP）
 - [x] P2-3 API 版本化（`/api/v1`）
-- [ ] P2-4 配置校验（pydantic-settings）
-- [ ] P2-5 image agent 接真实生图后端（去掉默认 mock）
+- [x] P2-4 配置校验（pydantic-settings）
+- [x] P2-5 image agent 接真实生图后端（去掉默认 mock）
 
 ---
 
@@ -186,14 +186,24 @@
 - **已知限制**：未做旧路径 301 重定向（一次性破坏性迁移，前端已同步）。若需兼容旧前端可后续补 redirect。
 
 ### P2-4 配置校验
-- **问题**：`config_store` 全字符串、无 pydantic-settings 校验；类型/范围错误只在运行时暴露。
-- **建议方案**：引入 `pydantic-settings`；对 `AGNES_TIMEOUT`（int>0）、`CORS_ALLOW_ORIGINS`（list）等做校验与默认值归一。
-- **验收标准**：非法配置在启动时/写入时即报错，而非运行时崩溃。
+- **问题**：`config.py` 用 `os.getenv + int()`，类型/范围错误只在运行时暴露（甚至静默 `0`/负数）。
+- **方案**：引入 `pydantic-settings`（`Settings` 模型，范围约束 `ge/le`），模块导入即实例化 → 非法配置直接 `RuntimeError` 失败（fail-fast）。保留所有模块级常量（`DATABASE_URL`/`APP_ENV`/`AGENT_TIMEOUT_SECONDS` 等）向后兼容，既有 `from app.config import X` 调用方零改动。`pydantic-settings>=2.2` 已加入 `requirements.txt`。
+- **验收**：`test_config_validation.py` 覆盖——默认值合理、构造参数覆盖生效、非整数字符串与越界值抛 `ValidationError`、坏环境变量下 `import app.config` 直接 `RuntimeError`。全仓测试通过、`ruff` 通过、`import app.main` 正常。
 
 ### P2-5 image agent 真实化
-- **问题**：`TOOL_BACKEND_IMAGE_GENERATION` 默认 `mock`，生图不走真实链路（之前审计标记未改）。
-- **建议方案**：接入真实生图后端（WisArt/`AGNES_IMAGE_MODEL`），保留 mock 作为离线兜底；输出走统一数据层。
-- **验收标准**：配置真实后端后生图返回真实图片 URL；mock 仅离线可用。
+- **问题**：`AgnesImageGenBackend` 已实现但**未注册**（死代码），真实生图后端不可达；MCP 后端抛 `NotImplementedError`（500）而非诚实 501。
+- **方案**：新增 `BackendType.AGNES`，将 `AgnesImageGenBackend` 注册到 `ImageGenerationTool._backends`（与 WisArt `API` 后端并列）；`McpImageGenBackend` 改为抛 `ToolNotConfigured`（诚实 501）。默认仍为 `mock`（离线兜底），但 `TOOL_BACKEND_IMAGE_GENERATION=agnes|api` 即可切换真实链路。
+- **验收**：`test_image_agent.py` 覆盖——mock 只给规划且无伪造 URL；WisArt 缺密钥→`ToolNotConfigured`；Agnes 缺 Key/调用失败→占位说明 + `image_url=None`（绝不伪造）；Agnes 有 Key + 真实 `generate_image`→返回真实 URL；`ImageAgent` 端到端产出结构化计划。全仓测试通过。
+
+---
+
+## 多 Agent 串联流水线（LangGraph）
+- **场景**：市场调研 → 产品机会判断 → Listing 生成，带状态传递与逐级诚实降级。
+- **实现**：`app/pipelines/research_to_listing.py`，`StateGraph(PipelineState)` 三节点顺序编排；`PipelineState`（`TypedDict`）为共享状态通道，`errors` 用 `operator.add` 逐步累积。
+- **适配器**：Product 消费 `keyword/category`；Listing 的 `key_features` 由 `Product.reasons` 提炼（Product 缺失时回退到 `MR.opportunities` 标题）。
+- **诚实降级**：每节点独立 try/except，单步失败仅记 `errors` 不抛出，下游照常运行（Product 不依赖 MR 报告、Listing 无卖点也能 fallback）。
+- **依赖**：`langgraph>=0.2`（自动引入 `langchain-core`）。
+- **验收**：`test_pipeline_research_to_listing.py` 3 用例——正常链路状态正确传递、MR 失败下游仍跑、Product 失败 Listing 回退到 MR 机会点。全仓 110 passed。
 
 ---
 

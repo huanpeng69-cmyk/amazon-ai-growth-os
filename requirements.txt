@@ -19,7 +19,7 @@ psycopg2-binary>=2.9       # PostgreSQL 驱动（DATABASE_URL=postgresql://...�
 redis>=5.0                 # 多实例共享限流后端（见 app/ratelimit.py；单实例内存限流时不需要）
 
 # ── 可选 / 未来扩展（按需取消注释，非运行必需）──
-# langgraph>=0.2            # 多 Agent 串联流水线编排（app/pipelines：市场调研→产品机会→Listing）
+langgraph>=0.2             # 多 Agent 串联流水线编排（app/pipelines：市场调研→产品机会→Listing）
 # pgvector>=0.2             # PostgreSQL 向量检索
 # openai>=1.0               # 若改用官方 SDK 调用 LLM/生图
 
