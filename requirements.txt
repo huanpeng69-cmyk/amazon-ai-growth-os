@@ -9,6 +9,7 @@ python-multipart>=0.0.9      # 利润成本上传接口（multipart/form-data）
 # 数据层
 sqlalchemy>=2.0             # ORM + SQLite/PostgreSQL
 pydantic>=2.5               # 配置 / 契约模型
+pydantic-settings>=2.2      # 配置校验（app/config.py：类型校验 + 环境覆盖 + 启动 fail-fast）
 alembic>=1.13               # 数据库迁移（替代手写 _migrate；双后端 SQLite/PostgreSQL）
 mako>=1.3                   # Alembic 迁移模板渲染（alembic revision 用；运行时可选）
 
@@ -18,7 +19,7 @@ psycopg2-binary>=2.9       # PostgreSQL 驱动（DATABASE_URL=postgresql://...�
 redis>=5.0                 # 多实例共享限流后端（见 app/ratelimit.py；单实例内存限流时不需要）
 
 # ── 可选 / 未来扩展（按需取消注释，非运行必需）──
-# langgraph>=0.2            # 替换内置轻量编排引擎
+# langgraph>=0.2            # 多 Agent 串联流水线编排（app/pipelines：市场调研→产品机会→Listing）
 # pgvector>=0.2             # PostgreSQL 向量检索
 # openai>=1.0               # 若改用官方 SDK 调用 LLM/生图
 
