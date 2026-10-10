@@ -1,4 +1,4 @@
-# AmazonSkillsChat — AI 亚马逊卖家全链路助手
+# Amazon AI Growth OS — AI 亚马逊卖家全链路助手
 
  基于 **Claude Agent SDK** 的亚马逊卖家全链路 AI 助手。集成 **55 个专业技能**，通过自然语言对话即可完成选品调研、关键词挖掘、Listing 优化、FBA 费用计算、PPC 广告、自动上架等全链路工作。
 
@@ -223,7 +223,7 @@ npm start
 ## 项目结构
 
 ```
-amazon-skills-chat/
+amazon-ai-growth-os/
 ├── .claude/
 │   ├── settings.json              # Playwright MCP 配置
  │   └── skills/                    # 55 个 Amazon 技能

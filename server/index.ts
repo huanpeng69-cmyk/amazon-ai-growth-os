@@ -300,4 +300,4 @@ setInterval(() => {
 setInterval(() => { wss.clients.forEach((ws) => { const c = ws as ClientWS; if (!c.isAlive) return c.terminate(); c.isAlive = false; c.ping(); }); }, 30000);
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3014;
-server.listen(PORT, () => { fileLog("Server", `AmazonSkillsChat Server listening on :${PORT}`); });
+server.listen(PORT, () => { fileLog("Server", `Amazon AI Growth OS Server listening on :${PORT}`); });

@@ -165,7 +165,7 @@ function ReportsSidebar({ chats, activeChatId, files, onSwitchChat, onDeleteChat
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/5 shrink-0">
         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-base shadow-lg shadow-amber-500/20">🔍</div>
         <div>
-          <p className="text-sm font-semibold text-slate-100 leading-tight">AmazonSkillsChat</p>
+          <p className="text-sm font-semibold text-slate-100 leading-tight">Amazon AI Growth OS</p>
           <p className="text-[10px] text-slate-500">AI 亚马逊卖家助手</p>
         </div>
       </div>
