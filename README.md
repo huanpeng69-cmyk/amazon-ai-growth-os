@@ -2,6 +2,14 @@
 
  基于 **Claude Agent SDK** 的亚马逊卖家全链路 AI 助手。集成 **55 个专业技能**，通过自然语言对话即可完成选品调研、关键词挖掘、Listing 优化、FBA 费用计算、PPC 广告、自动上架等全链路工作。
 
+## 界面预览
+
+| 欢迎页 · 模块选择 | 模块表单 |
+|---|---|
+| ![欢迎页](docs/screenshots/01-welcome.png) | ![模块表单](docs/screenshots/02-module-form.png) |
+| **聊天页 · 实时执行** | **报告预览** |
+| ![聊天页](docs/screenshots/03-chat.png) | ![报告预览](docs/screenshots/04-report.png) |
+
 ## 架构
 
 ```
