@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Runtime data & generated artifacts
+data/
+uploads/
+generated-images/
+reports/
+review-analysis-reports/
+ecom-pdp/
+Temp/
+
+# Cache
+.cache/
+.vite/
+
+# Misc local artifacts
+server.log
+test.txt
+test_py.txt
+test_write.py
+fa.py
+fetch2.js
+fetch_amz.py
+run_pw.js
+collect_data.cjs
+keyword_research.py
+GO.bat
+*.md.tmp
+B0CDLJSLTF_report.md
+product.html
+.claude/
+
+us_product.html
+uk.html
+对抗性审查报告.md
+技术方案.md
