@@ -41,8 +41,8 @@ interface Template {
 const TEMPLATES: Template[] = [
   {
     icon: "🎯", title: "一站式调研", desc: "ASIN深度分析9份报告",
-    accent: "from-amber-500/20 to-orange-600/5 border-amber-500/25",
-    chip: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
+    accent: "from-amber-100 to-orange-50 border-amber-200",
+    chip: "bg-amber-100 text-amber-700 ring-amber-200",
     fields: [
       { key: "asin", label: "ASIN 或产品 URL", placeholder: "如 B07PWTJ4H1" },
       { key: "market", label: "市场（可选，默认美国）", type: "select", options: MARKET_OPTIONS, optional: true },
@@ -51,8 +51,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "🔍", title: "关键词研究", desc: "长尾词+机会评分",
-    accent: "from-sky-500/20 to-cyan-600/5 border-sky-500/25",
-    chip: "bg-sky-500/15 text-sky-300 ring-sky-500/30",
+    accent: "from-sky-100 to-cyan-50 border-sky-200",
+    chip: "bg-sky-100 text-sky-700 ring-sky-200",
     fields: [
       { key: "keyword", label: "种子关键词", placeholder: "如 portable blender" },
       { key: "market", label: "市场（可选，默认美国）", type: "select", options: MARKET_OPTIONS, optional: true },
@@ -61,8 +61,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "📝", title: "Listing优化", desc: "创建/优化Listing",
-    accent: "from-emerald-500/20 to-teal-600/5 border-emerald-500/25",
-    chip: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
+    accent: "from-emerald-100 to-teal-50 border-emerald-200",
+    chip: "bg-emerald-100 text-emerald-700 ring-emerald-200",
     fields: [
       { key: "asin", label: "ASIN 或产品 URL", placeholder: "如 B0D72TSM62" },
       { key: "notes", label: "需求说明（可选）", placeholder: "如：突出便携和续航", optional: true },
@@ -71,8 +71,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "💰", title: "FBA计算", desc: "费用明细+利润分析",
-    accent: "from-violet-500/20 to-purple-600/5 border-violet-500/25",
-    chip: "bg-violet-500/15 text-violet-300 ring-violet-500/30",
+    accent: "from-violet-100 to-purple-50 border-violet-200",
+    chip: "bg-violet-100 text-violet-700 ring-violet-200",
     fields: [
       { key: "price", label: "售价（美元）", placeholder: "如 29.99" },
       { key: "cost", label: "采购成本（美元）", placeholder: "如 8" },
@@ -82,8 +82,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "📊", title: "销量估算", desc: "月销量+营收",
-    accent: "from-cyan-500/20 to-blue-600/5 border-cyan-500/25",
-    chip: "bg-cyan-500/15 text-cyan-300 ring-cyan-500/30",
+    accent: "from-cyan-100 to-blue-50 border-cyan-200",
+    chip: "bg-cyan-100 text-cyan-700 ring-cyan-200",
     fields: [
       { key: "bsr", label: "BSR 或 ASIN", placeholder: "如 1500 或 B09V3KXJPB" },
       { key: "market", label: "市场（可选，默认美国）", type: "select", options: MARKET_OPTIONS, optional: true },
@@ -92,8 +92,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "📢", title: "PPC广告", desc: "广告结构+出价策略",
-    accent: "from-indigo-500/20 to-blue-600/5 border-indigo-500/25",
-    chip: "bg-indigo-500/15 text-indigo-300 ring-indigo-500/30",
+    accent: "from-indigo-100 to-blue-50 border-indigo-200",
+    chip: "bg-indigo-100 text-indigo-700 ring-indigo-200",
     fields: [
       { key: "asin", label: "ASIN 或产品 URL", placeholder: "如 B0D72TSM62" },
       { key: "budget", label: "日预算（美元）", placeholder: "如 50" },
@@ -102,8 +102,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "🚀", title: "自动上架", desc: "填表+截图确认后提交",
-    accent: "from-rose-500/20 to-red-600/5 border-rose-500/25",
-    chip: "bg-rose-500/15 text-rose-300 ring-rose-500/30",
+    accent: "from-rose-100 to-red-50 border-rose-200",
+    chip: "bg-rose-100 text-rose-700 ring-rose-200",
     fields: [
       { key: "asin", label: "ASIN 或产品 URL（跟卖/改款，没有可空）", placeholder: "如 B0D72TSM62", optional: true },
       { key: "market", label: "市场（可选，默认美国）", type: "select", options: MARKET_OPTIONS, optional: true },
@@ -116,8 +116,8 @@ const TEMPLATES: Template[] = [
   },
   {
     icon: "🎨", title: "AI商品图包", desc: "5主图+8详情页图 ecom-pdp",
-    accent: "from-pink-500/20 to-fuchsia-600/5 border-pink-500/25",
-    chip: "bg-pink-500/15 text-pink-300 ring-pink-500/30",
+    accent: "from-pink-100 to-fuchsia-50 border-pink-200",
+    chip: "bg-pink-100 text-pink-700 ring-pink-200",
     fields: [
       { key: "product", label: "产品描述（名称+核心卖点）", placeholder: "如 便携式榨汁杯，20秒搅打、USB-C充电、防漏、380ml" },
       { key: "audience", label: "目标人群", placeholder: "如 健身人群和通勤上班族" },
@@ -129,7 +129,7 @@ const TEMPLATES: Template[] = [
 ];
 
 function FileTree({ files, onFileClick, depth = 0 }: { files: ReportFile[]; onFileClick: (path: string) => void; depth?: number }) {
-  return (<div>{files.map((f) => (<div key={f.path}>{f.type === "directory" ? (<div><div className="px-2 py-1 text-xs text-slate-500 font-medium tracking-wide" style={{ paddingLeft: `${depth * 12 + 8}px` }}>▸ {f.name}</div>{f.children && <FileTree files={f.children} onFileClick={onFileClick} depth={depth + 1} />}</div>) : (<button onClick={() => onFileClick(f.path)} className="w-full text-left px-2 py-1.5 text-xs text-slate-300 hover:bg-white/5 hover:text-amber-300 rounded-lg mx-1 truncate transition-colors" style={{ paddingLeft: `${depth * 12 + 8}px`, width: "calc(100% - 8px)" }}>📄 {f.name}</button>)}</div>))}</div>);
+  return (<div>{files.map((f) => (<div key={f.path}>{f.type === "directory" ? (<div><div className="px-2 py-1 text-xs text-stone-400 font-medium tracking-wide" style={{ paddingLeft: `${depth * 12 + 8}px` }}>▸ {f.name}</div>{f.children && <FileTree files={f.children} onFileClick={onFileClick} depth={depth + 1} />}</div>) : (<button onClick={() => onFileClick(f.path)} className="w-full text-left px-2 py-1.5 text-xs text-stone-600 hover:bg-amber-50 hover:text-amber-700 rounded-lg mx-1 truncate transition-colors" style={{ paddingLeft: `${depth * 12 + 8}px`, width: "calc(100% - 8px)" }}>📄 {f.name}</button>)}</div>))}</div>);
 }
 
 function ChatList({ chats, activeChatId, onSwitch, onDelete, onNew }: {
@@ -138,18 +138,18 @@ function ChatList({ chats, activeChatId, onSwitch, onDelete, onNew }: {
   return (
     <div className="flex flex-col max-h-[35%] shrink-0">
       <div className="flex items-center justify-between px-4 py-3 shrink-0">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">历史会话</span>
-        <button onClick={onNew} className="text-xs text-amber-400 hover:text-amber-300 px-2 py-1 rounded-md hover:bg-amber-500/10 transition-colors">＋ 新会话</button>
+        <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">历史会话</span>
+        <button onClick={onNew} className="text-xs text-amber-600 hover:text-amber-700 px-2 py-1 rounded-md hover:bg-amber-50 transition-colors">＋ 新会话</button>
       </div>
       <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
-        {chats.length === 0 && <p className="text-xs text-slate-600 text-center mt-2 px-2">暂无历史会话</p>}
+        {chats.length === 0 && <p className="text-xs text-stone-400 text-center mt-2 px-2">暂无历史会话</p>}
         {chats.map((c) => (
-          <div key={c.chatId} className={`group flex items-center gap-1.5 px-2.5 py-2 cursor-pointer rounded-lg transition-colors ${c.chatId === activeChatId ? "bg-amber-500/10 ring-1 ring-amber-500/25" : "hover:bg-white/5"}`} onClick={() => onSwitch(c.chatId)}>
+          <div key={c.chatId} className={`group flex items-center gap-1.5 px-2.5 py-2 cursor-pointer rounded-lg transition-all ${c.chatId === activeChatId ? "bg-amber-50 ring-1 ring-amber-200" : "hover:bg-stone-100"}`} onClick={() => onSwitch(c.chatId)}>
             <div className="flex-1 min-w-0">
-              <p className={`text-xs truncate ${c.chatId === activeChatId ? "text-amber-300" : "text-slate-300"}`}>{c.preview || c.chatId}</p>
-              <p className="text-[10px] text-slate-600 mt-0.5">{new Date(c.lastTs).toLocaleString()} · {c.messageCount} 条</p>
+              <p className={`text-xs truncate ${c.chatId === activeChatId ? "text-amber-700 font-medium" : "text-stone-600"}`}>{c.preview || c.chatId}</p>
+              <p className="text-[10px] text-stone-400 mt-0.5">{new Date(c.lastTs).toLocaleString()} · {c.messageCount} 条</p>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(c.chatId); }} className="text-[11px] text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" title="删除会话">✕</button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(c.chatId); }} className="text-[11px] text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" title="删除会话">✕</button>
           </div>
         ))}
       </div>
@@ -161,21 +161,21 @@ function ReportsSidebar({ chats, activeChatId, files, onSwitchChat, onDeleteChat
   chats: ChatMeta[]; activeChatId: string; files: ReportFile[]; onSwitchChat: (id: string) => void; onDeleteChat: (id: string) => void; onNewChat: () => void; onFileClick: (path: string) => void; onRefresh: () => void;
 }) {
   return (
-    <aside className="w-[280px] border-r border-white/5 bg-[#0d1119] flex flex-col shrink-0">
-      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/5 shrink-0">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-base shadow-lg shadow-amber-500/20">🔍</div>
+    <aside className="w-[280px] border-r border-stone-200/80 bg-white/80 backdrop-blur-xl flex flex-col shrink-0">
+      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-stone-100 shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-base shadow-lg shadow-orange-500/30">🔍</div>
         <div>
-          <p className="text-sm font-semibold text-slate-100 leading-tight">Amazon AI Growth OS</p>
-          <p className="text-[10px] text-slate-500">AI 亚马逊卖家助手</p>
+          <p className="text-sm font-semibold text-stone-800 leading-tight">Amazon AI Growth OS</p>
+          <p className="text-[10px] text-stone-400">AI 亚马逊卖家助手</p>
         </div>
       </div>
       <ChatList chats={chats} activeChatId={activeChatId} onSwitch={onSwitchChat} onDelete={onDeleteChat} onNew={onNewChat} />
-      <div className="flex items-center justify-between px-4 py-3 border-t border-white/5 shrink-0">
-        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">分析报告</span>
-        <button onClick={onRefresh} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">刷新</button>
+      <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100 shrink-0">
+        <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">分析报告</span>
+        <button onClick={onRefresh} className="text-xs text-stone-400 hover:text-stone-600 transition-colors">刷新</button>
       </div>
       <div className="flex-1 overflow-y-auto pb-3">
-        {files.length === 0 && <p className="text-xs text-slate-600 text-center mt-4 px-4 leading-relaxed">尚无报告<br />输入需求开始分析</p>}
+        {files.length === 0 && <p className="text-xs text-stone-400 text-center mt-4 px-4 leading-relaxed">尚无报告<br />输入需求开始分析</p>}
         <FileTree files={files} onFileClick={onFileClick} />
       </div>
     </aside>
@@ -186,13 +186,13 @@ function ProgressPanel({ messages }: { messages: ChatMessage[] }) {
   const toolCalls = messages.filter((m) => m.toolCall);
   if (toolCalls.length === 0) return null;
   return (
-    <aside className="w-[230px] border-l border-white/5 bg-[#0d1119] flex flex-col shrink-0">
-      <div className="px-4 py-3 border-b border-white/5 shrink-0"><span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">执行日志</span></div>
+    <aside className="w-[230px] border-l border-stone-200/80 bg-white/80 backdrop-blur-xl flex flex-col shrink-0">
+      <div className="px-4 py-3 border-b border-stone-100 shrink-0"><span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">执行日志</span></div>
       <div className="flex-1 overflow-y-auto p-2.5 space-y-1">
-        {toolCalls.map((m) => (<div key={m.id} className={`flex items-center gap-2 py-1.5 px-2.5 rounded-lg ${m.toolCall!.status === "running" ? "bg-amber-500/10" : ""}`}>
-          {m.toolCall!.status === "done" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />}
-          {m.toolCall!.status === "running" && <span className="inline-block w-2 h-2 bg-amber-400 rounded-full animate-pulse shrink-0" />}
-          <span className={`text-xs font-mono truncate ${m.toolCall!.status === "running" ? "text-amber-300" : "text-slate-500"}`}>{m.toolCall!.name}</span>
+        {toolCalls.map((m) => (<div key={m.id} className={`flex items-center gap-2 py-1.5 px-2.5 rounded-lg ${m.toolCall!.status === "running" ? "bg-amber-50" : ""}`}>
+          {m.toolCall!.status === "done" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />}
+          {m.toolCall!.status === "running" && <span className="inline-block w-2 h-2 bg-amber-500 rounded-full animate-pulse shrink-0" />}
+          <span className={`text-xs font-mono truncate ${m.toolCall!.status === "running" ? "text-amber-700" : "text-stone-400"}`}>{m.toolCall!.name}</span>
         </div>))}
       </div>
     </aside>
@@ -200,11 +200,11 @@ function ProgressPanel({ messages }: { messages: ChatMessage[] }) {
 }
 
 function MessageBubble({ msg }: { msg: ChatMessage }) {
-  if (msg.role === "user") return (<div className="flex justify-end mb-4 animate-fade-up"><div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[80%] whitespace-pre-wrap shadow-lg shadow-amber-900/30">{msg.content}{msg.files?.map((f) => (<div key={f.path} className="text-xs text-amber-100 mt-1.5 flex items-center gap-1">📎 {f.name}</div>))}</div></div>);
-  if (msg.role === "system" && msg.toolCall) { const tc = msg.toolCall; return (<div className="flex justify-start mb-2.5 animate-fade-up"><div className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm ${tc.status === "running" ? "bg-amber-500/10 border border-amber-500/25" : "bg-white/[0.03] border border-white/10"}`}><div className="flex items-center gap-2">{tc.status === "running" ? <span className="inline-block w-2 h-2 bg-amber-400 rounded-full animate-pulse" /> : <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full" />}<span className="font-mono text-[13px] text-slate-300">{tc.name}</span></div>{tc.status === "running" && tc.input !== undefined && tc.input !== null && <pre className="text-xs text-slate-500 mt-1.5 max-h-20 overflow-hidden font-mono">{String(typeof tc.input === "string" ? tc.input : (JSON.stringify(tc.input as Record<string, unknown>, null, 2) || "")).slice(0, 200)}</pre>}</div></div>); }
-  if (msg.role === "system") return (<div className="flex justify-center mb-3"><div className="bg-red-500/10 border border-red-500/20 text-red-300 rounded-xl px-4 py-2 text-sm max-w-[85%] text-center">{msg.content}</div></div>);
-  if (msg.role === "image") return (<div className="flex justify-start mb-4 animate-fade-up"><div className="bg-white/[0.03] border border-white/10 rounded-2xl rounded-bl-md p-2.5 max-w-[85%]"><a href={`/${msg.content}`} target="_blank" rel="noreferrer"><img src={`/${msg.content}`} alt={msg.content} className="rounded-xl max-h-80 w-auto cursor-zoom-in hover:opacity-90 transition-opacity" loading="lazy" /></a><p className="text-[10px] text-slate-600 mt-1.5 truncate font-mono">🖼 {msg.content}</p></div></div>);
-  return (<div className="flex justify-start mb-4 animate-fade-up"><div className="bg-[#131826] border border-white/8 text-slate-100 rounded-2xl rounded-bl-md px-4.5 py-3 max-w-[88%] md-body"><ReactMarkdown>{msg.content}</ReactMarkdown></div></div>);
+  if (msg.role === "user") return (<div className="flex justify-end mb-4 animate-fade-up"><div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-2xl rounded-br-md px-4 py-2.5 max-w-[80%] whitespace-pre-wrap shadow-lg shadow-orange-500/25">{msg.content}{msg.files?.map((f) => (<div key={f.path} className="text-xs text-amber-100 mt-1.5 flex items-center gap-1">📎 {f.name}</div>))}</div></div>);
+  if (msg.role === "system" && msg.toolCall) { const tc = msg.toolCall; return (<div className="flex justify-start mb-2.5 animate-fade-up"><div className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm shadow-sm ${tc.status === "running" ? "bg-amber-50 border border-amber-200" : "bg-white border border-stone-200"}`}><div className="flex items-center gap-2">{tc.status === "running" ? <span className="inline-block w-2 h-2 bg-amber-500 rounded-full animate-pulse" /> : <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full" />}<span className="font-mono text-[13px] text-stone-600">{tc.name}</span></div>{tc.status === "running" && tc.input !== undefined && tc.input !== null && <pre className="text-xs text-stone-400 mt-1.5 max-h-20 overflow-hidden font-mono">{String(typeof tc.input === "string" ? tc.input : (JSON.stringify(tc.input as Record<string, unknown>, null, 2) || "")).slice(0, 200)}</pre>}</div></div>); }
+  if (msg.role === "system") return (<div className="flex justify-center mb-3"><div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-2 text-sm max-w-[85%] text-center">{msg.content}</div></div>);
+  if (msg.role === "image") return (<div className="flex justify-start mb-4 animate-fade-up"><div className="bg-white border border-stone-200 rounded-2xl rounded-bl-md p-2.5 max-w-[85%] shadow-sm"><a href={`/${msg.content}`} target="_blank" rel="noreferrer"><img src={`/${msg.content}`} alt={msg.content} className="rounded-xl max-h-80 w-auto cursor-zoom-in hover:opacity-90 transition-opacity" loading="lazy" /></a><p className="text-[10px] text-stone-400 mt-1.5 truncate font-mono">🖼 {msg.content}</p></div></div>);
+  return (<div className="flex justify-start mb-4 animate-fade-up"><div className="bg-white border border-stone-200/80 text-stone-800 rounded-2xl rounded-bl-md px-4.5 py-3 max-w-[88%] md-body shadow-sm"><ReactMarkdown>{msg.content}</ReactMarkdown></div></div>);
 }
 
 function TemplateForm({ template, onStart, onCancel }: { template: Template; onStart: (text: string) => void; onCancel: () => void }) {
@@ -213,21 +213,21 @@ function TemplateForm({ template, onStart, onCancel }: { template: Template; onS
   const imgInputRef = useRef<HTMLInputElement>(null);
   const requiredOk = template.fields.filter((f) => !f.optional).every((f) => (values[f.key] || "").trim());
   return (
-    <div className={`bg-gradient-to-b ${template.accent} rounded-2xl p-5 w-full max-w-md border shadow-xl shadow-black/30 animate-fade-up`}>
+    <div className={`bg-gradient-to-b ${template.accent} rounded-3xl p-5 w-full max-w-md border shadow-xl shadow-stone-900/5 animate-pop-in`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <span className="w-9 h-9 rounded-xl bg-black/30 flex items-center justify-center text-lg">{template.icon}</span>
+          <span className="w-9 h-9 rounded-xl bg-white/90 shadow-sm flex items-center justify-center text-lg">{template.icon}</span>
           <div>
-            <p className="text-sm font-semibold text-slate-100">{template.title}</p>
-            <p className="text-xs text-slate-400">{template.desc}</p>
+            <p className="text-sm font-semibold text-stone-800">{template.title}</p>
+            <p className="text-xs text-stone-500">{template.desc}</p>
           </div>
         </div>
-        <button onClick={onCancel} className="text-xs text-slate-400 hover:text-slate-200 px-2.5 py-1 rounded-lg hover:bg-white/5 transition-colors">← 返回</button>
+        <button onClick={onCancel} className="text-xs text-stone-400 hover:text-stone-600 px-2.5 py-1 rounded-lg hover:bg-white/70 transition-colors">← 返回</button>
       </div>
       <div className="flex flex-col gap-3">
         {template.fields.map((f) => (
           <div key={f.key} className="flex flex-col gap-1.5">
-            <label className="text-xs text-slate-400 flex items-center gap-1.5">{f.label}{f.optional && <span className="text-[10px] text-slate-600">可选</span>}</label>
+            <label className="text-xs text-stone-500 flex items-center gap-1.5">{f.label}{f.optional && <span className="text-[10px] text-stone-400">可选</span>}</label>
             {f.type === "select" ? (
               <select value={values[f.key] || ""} onChange={(e) => setValues((p) => ({ ...p, [f.key]: e.target.value }))} className="input-field appearance-none cursor-pointer">
                 <option value="">默认（美国）</option>
@@ -244,14 +244,14 @@ function TemplateForm({ template, onStart, onCancel }: { template: Template; onS
                     e.target.value = "";
                   }} />
                 {values[f.key] ? (
-                  <div className="flex items-center gap-2.5 bg-black/30 border border-white/10 rounded-xl p-2">
+                  <div className="flex items-center gap-2.5 bg-white border border-stone-200 rounded-xl p-2 shadow-sm">
                     <img src={`/${values[f.key]}`} alt="参考图" className="h-12 w-12 rounded-lg object-cover" />
-                    <span className="text-xs text-slate-400 flex-1 truncate font-mono">{values[f.key]}</span>
-                    <button onClick={() => setValues((p) => ({ ...p, [f.key]: "" }))} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-md hover:bg-red-500/10 transition-colors">清除</button>
+                    <span className="text-xs text-stone-500 flex-1 truncate font-mono">{values[f.key]}</span>
+                    <button onClick={() => setValues((p) => ({ ...p, [f.key]: "" }))} className="text-xs text-red-500 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-50 transition-colors">清除</button>
                   </div>
                 ) : (
                   <button onClick={() => imgInputRef.current?.click()} disabled={uploading}
-                    className="w-full bg-black/20 text-slate-400 text-sm rounded-xl px-3 py-2.5 border border-dashed border-white/15 hover:border-amber-500/50 hover:text-amber-400 transition-colors text-left">
+                    className="w-full bg-white/60 text-stone-500 text-sm rounded-xl px-3 py-2.5 border border-dashed border-stone-300 hover:border-amber-400 hover:text-amber-600 transition-colors text-left">
                     {uploading ? "⏳ 上传中..." : "📷 点击上传产品图（png/jpg/webp，可选）"}
                   </button>
                 )}
@@ -262,7 +262,7 @@ function TemplateForm({ template, onStart, onCancel }: { template: Template; onS
           </div>
         ))}
         <button onClick={() => requiredOk && onStart(template.build(values))} disabled={!requiredOk}
-          className="mt-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-all shadow-lg shadow-amber-900/30 disabled:shadow-none">
+          className="mt-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 bg-[length:200%_auto] animate-gradient-x disabled:animate-none disabled:from-stone-200 disabled:to-stone-200 disabled:text-stone-400 text-white text-sm font-medium rounded-xl px-4 py-2.5 transition-all shadow-lg shadow-orange-500/25 disabled:shadow-none active:scale-[0.98]">
           开始分析 →
         </button>
       </div>
@@ -273,27 +273,29 @@ function TemplateForm({ template, onStart, onCancel }: { template: Template; onS
 function WelcomeScreen({ onStart }: { onStart: (text: string) => void }) {
   const [selected, setSelected] = useState<Template | null>(null);
   return (
-    <div className="flex flex-col items-center justify-center min-h-full text-slate-400 gap-5 py-10">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-3xl shadow-xl shadow-amber-500/20">🔍</div>
+    <div className="relative flex flex-col items-center justify-center min-h-full text-stone-500 gap-5 py-10">
+      <div className="blob w-72 h-72 bg-amber-300/40 -top-10 -left-10 animate-float" />
+      <div className="blob w-64 h-64 bg-sky-300/30 -bottom-8 -right-8 animate-float-slow" />
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-3xl shadow-xl shadow-orange-500/30 animate-float">🔍</div>
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-slate-100">欢迎回来 👋</h2>
+        <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">欢迎回来 👋</h2>
         <p className="text-sm mt-1.5">56 个专业技能 · 浏览器自动化 · 12 个市场 · 全中文分析 · AI 图包生成</p>
       </div>
       {selected ? (
         <TemplateForm template={selected} onStart={onStart} onCancel={() => setSelected(null)} />
       ) : (
         <div className="grid grid-cols-2 gap-3 mt-3 max-w-xl w-full px-4">
-          {TEMPLATES.map((t) => (
-            <button key={t.title} onClick={() => setSelected(t)}
-              className={`card-hover bg-gradient-to-b ${t.accent} bg-[#131826]/40 rounded-2xl px-4 py-4 text-left border`}>
-              <span className={`inline-flex w-9 h-9 rounded-xl items-center justify-center text-lg ${t.chip} ring-1`}>{t.icon}</span>
-              <p className="text-sm font-medium text-slate-100 mt-2.5">{t.title}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{t.desc}</p>
+          {TEMPLATES.map((t, i) => (
+            <button key={t.title} onClick={() => setSelected(t)} style={{ animationDelay: `${i * 60}ms` }}
+              className={`card-hover bg-gradient-to-b ${t.accent} bg-white/70 backdrop-blur rounded-2xl px-4 py-4 text-left border animate-pop-in`}>
+              <span className={`inline-flex w-9 h-9 rounded-xl items-center justify-center text-lg ${t.chip} ring-1 shadow-sm`}>{t.icon}</span>
+              <p className="text-sm font-medium text-stone-800 mt-2.5">{t.title}</p>
+              <p className="text-xs text-stone-500 mt-0.5">{t.desc}</p>
             </button>
           ))}
         </div>
       )}
-      <p className="text-xs text-slate-600 mt-1">或在下方输入任意需求，如「深度调研 B07PWTJ4H1」</p>
+      <p className="text-xs text-stone-400 mt-1">或在下方输入任意需求，如「深度调研 B07PWTJ4H1」</p>
     </div>
   );
 }
@@ -309,15 +311,15 @@ function ReportView({ reportPath, content, onClose }: { reportPath: string; cont
   }, [content, fileName]);
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 glass shrink-0">
-        <span className="text-sm text-slate-300 truncate font-medium">📄 {reportPath}</span>
+      <div className="flex items-center justify-between px-5 py-3 border-b border-stone-200/70 glass shrink-0">
+        <span className="text-sm text-stone-600 truncate font-medium">📄 {reportPath}</span>
         <div className="flex gap-2 shrink-0">
-          <button onClick={download} className="text-xs text-amber-400 hover:text-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-500/10 transition-colors">⬇ 下载</button>
-          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">✕ 返回对话</button>
+          <button onClick={download} className="text-xs text-amber-600 hover:text-amber-700 px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors">⬇ 下载</button>
+          <button onClick={onClose} className="text-xs text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-lg hover:bg-stone-100 transition-colors">✕ 返回对话</button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto chat-bg">
-        <article className="max-w-4xl mx-auto px-6 py-8 md-body bg-[#0d1119]/60 border border-white/5 rounded-2xl my-6 shadow-xl shadow-black/20">
+        <article className="max-w-4xl mx-auto px-6 py-8 md-body bg-white border border-stone-200/80 rounded-2xl my-6 shadow-xl shadow-stone-900/5">
           <ReactMarkdown>{content}</ReactMarkdown>
         </article>
       </div>
@@ -365,16 +367,16 @@ export default function App() {
   const handleFileSelect = async (files: FileList | null) => { if (!files) return; for (const file of Array.from(files)) await upload(file); };
 
   return (
-    <div className="h-screen flex bg-[#090c12] text-slate-100">
+    <div className="h-screen flex bg-paper text-stone-800">
       <ReportsSidebar chats={chats} activeChatId={chatId} files={reportFiles} onSwitchChat={switchChat} onDeleteChat={handleDeleteChat} onNewChat={newChat} onFileClick={openReport} onRefresh={refreshReports} />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="flex items-center justify-between px-5 py-3.5 border-b border-white/5 glass shrink-0">
+        <header className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/70 glass shrink-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-base font-semibold text-slate-100">{viewingReport ? "报告预览" : "对话"}</h1>
+            <h1 className="text-base font-semibold text-stone-800">{viewingReport ? "报告预览" : "对话"}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" : "bg-red-400"}`} />
-            <span className="text-xs text-slate-500">{isConnected ? "已连接" : "断开"}</span>
+            <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-red-400"}`} />
+            <span className="text-xs text-stone-400">{isConnected ? "已连接" : "断开"}</span>
           </div>
         </header>
         {viewingReport ? (
@@ -384,20 +386,20 @@ export default function App() {
             <main className="flex-1 overflow-y-auto chat-bg">
               <div className="max-w-3xl mx-auto px-4 py-6">
                 {messages.length === 0 ? <WelcomeScreen onStart={handleSend} /> : messages.map((msg) => <MessageBubble key={msg.id} msg={msg} />)}
-                {isThinking && (<div className="flex justify-start mb-3"><div className="bg-[#131826] border border-white/10 rounded-2xl rounded-bl-md px-4 py-2.5 text-slate-400 text-sm flex items-center gap-2"><span className="inline-block w-2 h-2 bg-amber-400 rounded-full animate-pulse" />分析中...</div></div>)}
+                {isThinking && (<div className="flex justify-start mb-3 animate-fade-up"><div className="bg-white border border-stone-200 rounded-2xl rounded-bl-md px-4 py-2.5 text-stone-500 text-sm flex items-center gap-2 shadow-sm"><span className="inline-block w-1.5 h-1.5 bg-amber-500 rounded-full animate-dot-bounce" style={{ animationDelay: "0ms" }} /><span className="inline-block w-1.5 h-1.5 bg-amber-500 rounded-full animate-dot-bounce" style={{ animationDelay: "150ms" }} /><span className="inline-block w-1.5 h-1.5 bg-amber-500 rounded-full animate-dot-bounce" style={{ animationDelay: "300ms" }} />分析中...</div></div>)}
                 <div ref={messagesEndRef} />
               </div>
             </main>
-            {uploadedFiles.length > 0 && (<div className="px-4 py-2 glass border-t border-white/5 flex items-center gap-2 flex-wrap shrink-0">{uploadedFiles.map((f) => (<span key={f.path} className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-300">📎 {f.name}</span>))}<button onClick={clearFiles} className="text-xs text-red-400 hover:text-red-300 ml-1 transition-colors">清除</button></div>)}
-            <div className="px-4 py-3.5 glass border-t border-white/5 shrink-0">
+            {uploadedFiles.length > 0 && (<div className="px-4 py-2 glass border-t border-stone-200/70 flex items-center gap-2 flex-wrap shrink-0">{uploadedFiles.map((f) => (<span key={f.path} className="bg-white border border-stone-200 rounded-lg px-2.5 py-1 text-xs text-stone-600 shadow-sm">📎 {f.name}</span>))}<button onClick={clearFiles} className="text-xs text-red-500 hover:text-red-600 ml-1 transition-colors">清除</button></div>)}
+            <div className="px-4 py-3.5 glass border-t border-stone-200/70 shrink-0">
               <div className="max-w-3xl mx-auto flex items-end gap-2">
                 <input type="file" ref={fileInputRef} className="hidden" accept=".csv,.xlsx,.xls,.txt,.pdf,.doc,.docx,.md,.png,.jpg,.jpeg,.webp" multiple onChange={(e) => handleFileSelect(e.target.files)} />
-                <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors shrink-0" title="上传文件（图片可作图生图参考）">{uploading ? "⏳" : "📎"}</button>
-                <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入 ASIN、URL 或分析需求，如「深度调研 B07PWTJ4H1」..." rows={1} className="flex-1 bg-white/5 border border-white/10 text-slate-100 rounded-xl px-4 py-2.5 resize-none outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/15 placeholder-slate-600 transition-all text-sm" />
+                <button onClick={() => fileInputRef.current?.click()} disabled={uploading} className="p-2.5 rounded-xl bg-white border border-stone-200 hover:border-amber-300 hover:text-amber-600 text-stone-400 transition-all shadow-sm active:scale-90 shrink-0" title="上传文件（图片可作图生图参考）">{uploading ? "⏳" : "📎"}</button>
+                <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入 ASIN、URL 或分析需求，如「深度调研 B07PWTJ4H1」..." rows={1} className="flex-1 bg-white border border-stone-200 text-stone-800 rounded-xl px-4 py-2.5 resize-none outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/10 placeholder-stone-400 transition-all text-sm shadow-sm" />
                 {isThinking ? (
-                  <button onClick={stop} className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 hover:bg-red-500/25 text-red-300 transition-colors shrink-0" title="停止本次任务">⏹</button>
+                  <button onClick={stop} className="p-2.5 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 text-red-500 transition-all active:scale-90 shrink-0" title="停止本次任务">⏹</button>
                 ) : (
-                  <button onClick={() => handleSend()} disabled={(!input.trim() && !uploadedFiles.length) || !isConnected} className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white transition-all shadow-lg shadow-amber-900/30 disabled:shadow-none shrink-0">➤</button>
+                  <button onClick={() => handleSend()} disabled={(!input.trim() && !uploadedFiles.length) || !isConnected} className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 disabled:from-stone-200 disabled:to-stone-200 disabled:text-stone-400 text-white transition-all shadow-lg shadow-orange-500/30 disabled:shadow-none active:scale-90 shrink-0">➤</button>
                 )}
               </div>
             </div>
